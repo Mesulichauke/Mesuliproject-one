@@ -5,6 +5,7 @@ This is a Student Management System built as a web application that provides aut
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
+Deployment preference: User interested in running system on own servers with deployment guidance provided.
 
 # System Architecture
 
