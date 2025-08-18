@@ -769,33 +769,7 @@
             }
         }
 
-        // Display children in the UI
-        function displayChildren(children) {
-            const childrenList = document.getElementById('children-list');
-            
-            if (children.length === 0) {
-                childrenList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No children registered yet. Click "Add Child" to get started.</p>';
-                return;
-            }
-
-            childrenList.innerHTML = children.map(child => `
-                <div class="child-card">
-                    <div class="child-card-header">
-                        <h4>${child.firstName} ${child.lastName}</h4>
-                        <div class="child-card-actions">
-                            <button onclick="editStudent('${child.id}')" class="btn-edit">✏️ Edit</button>
-                            <button onclick="viewStudentProfile('${child.id}')" class="btn-view">👁️ View Dashboard</button>
-                        </div>
-                    </div>
-                    <div class="child-details">
-                        <p><strong>Email:</strong> ${child.email}</p>
-                        <p><strong>Grade:</strong> ${child.grade || 'Not specified'}</p>
-                        <p><strong>Student ID:</strong> ${child.studentId || 'Not specified'}</p>
-                        <p><strong>Phone:</strong> ${child.phone || 'Not specified'}</p>
-                    </div>
-                </div>
-            `).join('');
-        }
+        // Note: Enhanced displayChildren function is defined later in the file
 
         // Modal management functions
         window.showAddStudentForm = function() {
