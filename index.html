@@ -194,14 +194,15 @@
 
     <!-- Linked Student Registration (for Parents) -->
     <div id="linked-student-registration" class="linked-section hidden">
-      <h2>Register Student (Linked to Parent)</h2>
+      <h2>📚 Register Your Child (Student Account)</h2>
+      <p style="color: #666; margin-bottom: 15px;">Complete your child's student profile to provide them with access to their comprehensive dashboard.</p>
       <form id="student-form">
         <div class="form-row">
           <div class="form-group">
-            <input type="text" id="student-firstname" placeholder="First Name" required>
+            <input type="text" id="student-firstname" placeholder="Student's First Name" required>
           </div>
           <div class="form-group">
-            <input type="text" id="student-lastname" placeholder="Last Name" required>
+            <input type="text" id="student-lastname" placeholder="Student's Last Name" required>
           </div>
         </div>
         <div class="form-group">
@@ -246,9 +247,10 @@
         </div>
 
         <div class="form-group">
-          <input type="text" id="linked-parent-id" placeholder="Parent ID" readonly>
+          <label style="font-weight: bold; color: #333;">Parent ID (Auto-filled):</label>
+          <input type="text" id="linked-parent-id" placeholder="Parent ID" readonly style="background: #f5f5f5;">
         </div>
-        <button type="submit" class="submit-btn">Register Student</button>
+        <button type="submit" class="submit-btn" style="background: #28a745;">Complete Student Registration</button>
       </form>
     </div>
   </div>
@@ -367,17 +369,53 @@ document.getElementById('register-form').addEventListener('submit', async functi
     hideLoading();
     
     if (role === 'Parent') {
+      console.log("Parent registration successful, showing student form");
+      
+      // Don't clear the form immediately - wait a moment
+      setTimeout(() => {
+        document.getElementById('register-form').reset();
+      }, 500);
+      
+      // Set the parent ID for the student form
       document.getElementById('linked-parent-id').value = identity;
-      document.getElementById('linked-student-registration').classList.remove('hidden');
-      showSuccess("Parent registered successfully! Now register your child.");
+      
+      // Show the student registration section with animation
+      const linkedSection = document.getElementById('linked-student-registration');
+      linkedSection.classList.remove('hidden');
+      
+      // Scroll to the student registration section
+      setTimeout(() => {
+        linkedSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 200);
+      
+      showSuccess("Parent registered successfully! Please complete your child's registration below.");
+      
+      // Also highlight the student registration section
+      setTimeout(() => {
+        linkedSection.style.boxShadow = '0 0 15px rgba(40, 167, 69, 0.3)';
+        linkedSection.style.border = '2px solid #28a745';
+      }, 300);
     } else {
       showSuccess(`${role} registered successfully! You can now login.`);
-      // Switch to login tab
-      document.querySelector('[data-tab="login"]').click();
+      // Switch to login tab after a short delay
+      setTimeout(() => {
+        document.querySelector('[data-tab="login"]').click();
+      }, 2000);
     }
   } catch (error) {
+    console.error("Registration error:", error);
     hideLoading();
-    showError("Registration failed: " + error.message);
+    
+    // Handle specific Firebase auth errors
+    if (error.code === 'auth/email-already-in-use') {
+      showError("This email is already registered. Please use a different email or try logging in.");
+    } else if (error.code === 'auth/weak-password') {
+      showError("Password is too weak. Please use a stronger password with at least 6 characters.");
+    } else if (error.code === 'auth/invalid-email') {
+      showError("Please enter a valid email address.");
+    } else {
+      showError("Registration failed: " + error.message);
+    }
   }
 });
 
