@@ -852,6 +852,145 @@
             return await getDownloadURL(snapshot.ref);
         }
 
+        // Show student credentials after successful registration
+        function showStudentCredentials(email, password, studentUid) {
+            const dashboardLink = `student-profile.html?uid=${studentUid}`;
+            
+            // Create a modal to display credentials
+            const credentialsModal = document.createElement('div');
+            credentialsModal.className = 'modal';
+            credentialsModal.style.display = 'block';
+            credentialsModal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3>✅ Child Account Created Successfully!</h3>
+                        <button onclick="this.closest('.modal').remove()" class="close-btn">✕</button>
+                    </div>
+                    <div style="padding: 20px; background: #f8f9fa; border-radius: 4px; margin: 15px 0;">
+                        <h4 style="margin-top: 0; color: #28a745;">Student Login Credentials:</h4>
+                        <div style="background: white; padding: 15px; border-radius: 4px; border: 1px solid #dee2e6;">
+                            <p><strong>Email:</strong> ${email}</p>
+                            <p><strong>Temporary Password:</strong> ${password}</p>
+                            <p><strong>Dashboard Access:</strong> <a href="${dashboardLink}" target="_blank" style="color: #007bff;">Open Student Dashboard</a></p>
+                        </div>
+                        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 10px; margin: 15px 0;">
+                            <p style="margin: 0; color: #856404;"><strong>Important:</strong> Please save these credentials and share them with your child. They should change the password after first login for security.</p>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                            <button onclick="copyStudentCredentials('${email}', '${password}', '${dashboardLink}')" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">📋 Copy Credentials</button>
+                            <button onclick="this.closest('.modal').remove()" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Got It</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(credentialsModal);
+        }
+
+        // Copy student credentials
+        window.copyStudentCredentials = function(email, password, dashboardLink) {
+            const credentialsText = `Student Login Credentials:
+Email: ${email}
+Temporary Password: ${password}
+Dashboard Link: ${dashboardLink}
+
+Important: Please change the password after first login for security.`;
+            
+            navigator.clipboard.writeText(credentialsText).then(() => {
+                alert('✅ Credentials copied to clipboard! You can now share them with your child.');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = credentialsText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('✅ Credentials copied to clipboard! You can now share them with your child.');
+            });
+        };
+
+        // Enhanced display children function with credentials access
+        function displayChildren(children) {
+            const childrenList = document.getElementById('children-list');
+            
+            if (children.length === 0) {
+                childrenList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No children registered yet. Click "Add Child" to get started.</p>';
+                return;
+            }
+
+            childrenList.innerHTML = children.map(child => `
+                <div class="child-card">
+                    <div class="child-card-header">
+                        <h4>${child.firstName} ${child.lastName}</h4>
+                        <div class="child-card-actions">
+                            <button onclick="showChildCredentials('${child.id}', '${child.email}')" style="background: #17a2b8; color: white; padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; font-size: 12px;">🔑 Credentials</button>
+                            <button onclick="editStudent('${child.id}')" class="btn-edit">✏️ Edit</button>
+                            <button onclick="viewStudentProfile('${child.id}')" class="btn-view">👁️ View Dashboard</button>
+                        </div>
+                    </div>
+                    <div class="child-details">
+                        <p><strong>Email:</strong> ${child.email}</p>
+                        <p><strong>Grade:</strong> ${child.grade || 'Not specified'}</p>
+                        <p><strong>Student ID:</strong> ${child.studentId || 'Not specified'}</p>
+                        <p><strong>Phone:</strong> ${child.phone || 'Not specified'}</p>
+                        <p><strong>Status:</strong> <span style="color: #28a745;">Active</span> | <a href="student-profile.html?uid=${child.id}" target="_blank" style="color: #007bff;">Dashboard Link</a></p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Show existing child credentials
+        window.showChildCredentials = function(studentId, email) {
+            const dashboardLink = `student-profile.html?uid=${studentId}`;
+            
+            const credentialsModal = document.createElement('div');
+            credentialsModal.className = 'modal';
+            credentialsModal.style.display = 'block';
+            credentialsModal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3>🔑 Student Access Information</h3>
+                        <button onclick="this.closest('.modal').remove()" class="close-btn">✕</button>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="background: #e7f3ff; padding: 15px; border-radius: 4px; border-left: 4px solid #007bff;">
+                            <p><strong>Email:</strong> ${email}</p>
+                            <p><strong>Dashboard Link:</strong> <a href="${dashboardLink}" target="_blank" style="color: #007bff;">Open Student Dashboard</a></p>
+                            <p style="color: #666; font-size: 14px; margin-top: 15px;"><strong>Note:</strong> If your child forgot their password, they can use the "Forgot Password" feature on the login page, or you can reset it through their dashboard.</p>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                            <button onclick="copyChildAccess('${email}', '${dashboardLink}')" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">📋 Copy Access Info</button>
+                            <button onclick="this.closest('.modal').remove()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(credentialsModal);
+        };
+
+        // Copy child access information
+        window.copyChildAccess = function(email, dashboardLink) {
+            const accessText = `Student Dashboard Access:
+Email: ${email}
+Dashboard Link: ${dashboardLink}
+
+Your child can login using their email and password. If they forgot their password, they can reset it on the login page.`;
+            
+            navigator.clipboard.writeText(accessText).then(() => {
+                alert('✅ Access information copied to clipboard!');
+            }).catch(() => {
+                const textArea = document.createElement('textarea');
+                textArea.value = accessText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('✅ Access information copied to clipboard!');
+            });
+        };
+
         // Global functions
         window.logout = async function() {
             try {
@@ -920,7 +1059,9 @@
 
                     hideAddStudentForm();
                     loadChildrenList();
-                    alert('Child added successfully!');
+                    
+                    // Show student credentials
+                    showStudentCredentials(email, password, uid);
                 } catch (error) {
                     console.error('Error adding student:', error);
                     alert('Error adding student: ' + error.message);

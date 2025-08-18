@@ -471,7 +471,33 @@ document.getElementById('student-form').addEventListener('submit', async functio
     document.getElementById('student-access').classList.remove('hidden');
     
     hideLoading();
-    showSuccess("Student registered successfully! Dashboard link is now available.");
+    
+    // Create access credentials and dashboard link
+    const studentCredentials = {
+      email: email,
+      temporaryPassword: password,
+      dashboardLink: studentLink,
+      loginInstructions: "Use the email and temporary password to login, then change your password for security."
+    };
+    
+    // Display student access information
+    document.getElementById('student-access').innerHTML = `
+      <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; padding: 15px; margin: 15px 0;">
+        <h4 style="color: #155724; margin-top: 0;">✅ Student Account Created Successfully!</h4>
+        <div style="background: white; padding: 15px; border-radius: 4px; margin: 10px 0;">
+          <p><strong>Student Login Credentials:</strong></p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Temporary Password:</strong> ${password}</p>
+          <p><strong>Dashboard Link:</strong> <a href="${studentLink}" target="_blank" class="student-dashboard-link">Open Student Dashboard</a></p>
+        </div>
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 10px; margin: 10px 0;">
+          <p style="margin: 0; color: #856404;"><strong>Important:</strong> Save these credentials and share them with your child. They should change the password after first login for security.</p>
+        </div>
+        <button onclick="copyCredentials('${email}', '${password}', '${studentLink}')" style="background: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">📋 Copy Credentials</button>
+      </div>
+    `;
+    
+    showSuccess("Student registered successfully! Login credentials are displayed below - please save them.");
   } catch (error) {
     hideLoading();
     showError("Student registration failed: " + error.message);
@@ -614,6 +640,29 @@ onAuthStateChanged(auth, async (user) => {
     }
   }
 });
+
+// Copy credentials function
+window.copyCredentials = function(email, password, dashboardLink) {
+  const credentialsText = `Student Login Credentials:
+Email: ${email}
+Temporary Password: ${password}
+Dashboard Link: ${dashboardLink}
+
+Important: Please change the password after first login for security.`;
+  
+  navigator.clipboard.writeText(credentialsText).then(() => {
+    alert('Credentials copied to clipboard! You can now share them with your child.');
+  }).catch(() => {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = credentialsText;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    alert('Credentials copied to clipboard! You can now share them with your child.');
+  });
+};
 
 console.log("Enhanced Student Management System initialized successfully");
 </script>
