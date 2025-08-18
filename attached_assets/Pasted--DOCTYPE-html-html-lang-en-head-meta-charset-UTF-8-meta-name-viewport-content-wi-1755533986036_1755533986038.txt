@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Management System - Login & Register</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+<style>
+  .hidden { display: none; }
+  .linked-section { margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 6px; background: #f9f9f9; }
+  .link-box { margin-top: 15px; padding: 10px; border: 1px dashed #4CAF50; background: #f1fff1; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .tab-btn.active { font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="container">
+<header class="header">
+  <h1>Student Management System</h1>
+  <p>Welcome to our comprehensive educational platform</p>
+</header>
+
+<div class="auth-container">
+  <!-- Loading Indicator -->
+  <div id="loading-indicator" class="loading-indicator hidden">
+    <div class="spinner"></div>
+    <p>Processing...</p>
+  </div>
+
+  <!-- Error Display -->
+  <div id="form-error" class="error-message hidden"></div>
+  <div id="success-message" class="success-message hidden"></div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <button class="tab-btn active" data-tab="login">Login</button>
+    <button class="tab-btn" data-tab="register">Register</button>
+  </div>
+
+  <!-- Login Form -->
+  <div id="login-tab" class="tab-content active">
+    <form id="login-form" class="auth-form">
+      <h2>Login to Your Account</h2>
+      <div class="form-group">
+        <input type="email" id="login-email" placeholder="Email Address" required>
+      </div>
+      <div class="form-group">
+        <input type="password" id="login-password" placeholder="Password" required>
+      </div>
+      <button type="submit" class="submit-btn">Login</button>
+    </form>
+  </div>
+
+  <!-- Registration Form -->
+  <div id="register-tab" class="tab-content">
+    <form id="register-form" class="auth-form">
+      <h2>Create New Account</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <input type="text" id="register-firstname" placeholder="First Name" required>
+        </div>
+        <div class="form-group">
+          <input type="text" id="register-lastname" placeholder="Last Name" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <input type="email" id="register-email" placeholder="Email Address" required>
+      </div>
+      <div class="form-group">
+        <input type="password" id="register-password" placeholder="Password (min 6 chars)" required minlength="6">
+      </div>
+      <div class="form-group">
+        <input type="text" id="register-identity" placeholder="Identity/ID Number" required>
+      </div>
+      <div class="form-group">
+        <input type="tel" id="register-phone" placeholder="Phone Number" required>
+      </div>
+      <div class="form-group">
+        <textarea id="register-address" placeholder="Physical Address" required rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <select id="register-role" required>
+          <option value="">Select Your Role</option>
+          <option value="Parent">Parent</option>
+          <option value="Teacher">Teacher</option>
+          <option value="Teacher Assistant">Teacher Assistant</option>
+          <option value="Principal">Principal</option>
+          <option value="Admin">Admin</option>
+          <option value="SGB">SGB Member</option>
+        </select>
+      </div>
+      <button type="submit" class="submit-btn">Register</button>
+    </form>
+
+    <!-- Linked Student Registration -->
+    <div id="linked-student-registration" class="linked-section hidden">
+      <h2>Register Student (Linked to Parent)</h2>
+      <form id="student-form">
+        <div class="form-group">
+          <input type="text" id="student-firstname" placeholder="First Name" required>
+        </div>
+        <div class="form-group">
+          <input type="text" id="student-lastname" placeholder="Last Name" required>
+        </div>
+        <div class="form-group">
+          <input type="email" id="student-email" placeholder="Email Address" required>
+        </div>
+        <div class="form-group">
+          <input type="tel" id="student-phone" placeholder="Phone Number" required>
+        </div>
+        <div class="form-group">
+          <textarea id="student-address" placeholder="Physical Address" required rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <input type="text" id="student-grade" placeholder="Grade" required>
+        </div>
+
+        <div id="student-access" class="link-box hidden">
+          <p>Student Dashboard Link:</p>
+          <a id="studentAccessLink" href="#" target="_blank">Open Student Dashboard</a>
+        </div>
+
+        <div class="form-group">
+          <input type="text" id="linked-parent-id" placeholder="Parent ID" readonly>
+        </div>
+        <button type="submit" class="submit-btn">Register Student</button>
+      </form>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Scripts -->
+<script type="module">
+import { auth, db } from './firebase-config.js';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById(this.dataset.tab + '-tab').classList.add('active');
+  });
+});
+
+// Parent registration
+document.getElementById('register-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const role = document.getElementById('register-role').value;
+  const email = document.getElementById('register-email').value;
+  const password = document.getElementById('register-password').value;
+  const firstName = document.getElementById('register-firstname').value;
+  const lastName = document.getElementById('register-lastname').value;
+  const phone = document.getElementById('register-phone').value;
+  const address = document.getElementById('register-address').value;
+  const identity = document.getElementById('register-identity').value;
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+
+    await setDoc(doc(db, "users", uid), {
+      firstName, lastName, email, phone, address, identity, role
+    });
+
+    if (role === 'Parent') {
+      document.getElementById('linked-parent-id').value = identity;
+      document.getElementById('linked-student-registration').classList.remove('hidden');
+      alert("Parent registered! Now register a student.");
+    } else {
+      alert(role + " registered successfully!");
+    }
+  } catch (error) {
+    alert("Error: " + error.message);
+  }
+});
+
+// Student registration
+document.getElementById('student-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const firstName = document.getElementById('student-firstname').value;
+  const lastName = document.getElementById('student-lastname').value;
+  const email = document.getElementById('student-email').value;
+  const phone = document.getElementById('student-phone').value;
+  const address = document.getElementById('student-address').value;
+  const grade = document.getElementById('student-grade').value;
+  const parentID = document.getElementById('linked-parent-id').value;
+  const password = "Temp123!"; // Temporary password
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+
+    await setDoc(doc(db, "users", uid), {
+      firstName, lastName, email, phone, address, grade, parentID, role: "Student"
+    });
+
+    const studentLink = `student-profile.html?uid=${uid}`;
+    document.getElementById('studentAccessLink').href = studentLink;
+    document.getElementById('student-access').classList.remove('hidden');
+    alert("Student registered! Dashboard link available below.");
+  } catch (error) {
+    alert("Error: " + error.message);
+  }
+});
+
+// Login
+document.getElementById('login-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+
+    const userDoc = await getDoc(doc(db, "users", uid));
+    const role = userDoc.data().role;
+
+    if (role === "Student") {
+      localStorage.setItem("currentStudentUID", uid);
+      window.location.href = "student-profile.html?uid=" + uid;
+    } else if (role === "Parent") {
+      window.location.href = "parent-profile.html";
+    } else if (role === "Teacher") {
+      window.location.href = "teacher-profile.html";
+    } else {
+      alert("Login successful, but role not recognized.");
+    }
+  } catch (error) {
+    alert("Login failed: " + error.message);
+  }
+});
+</script>
+</body>
+</html>

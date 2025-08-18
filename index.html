@@ -1,187 +1,583 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Management System - Login & Register</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Management System - Login & Register</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+<style>
+  .hidden { display: none; }
+  .linked-section { 
+    margin-top: 20px; 
+    padding: 15px; 
+    border: 1px solid #ccc; 
+    border-radius: 6px; 
+    background: #f9f9f9; 
+    animation: slideIn 0.3s ease-in;
+  }
+  .link-box { 
+    margin-top: 15px; 
+    padding: 10px; 
+    border: 1px dashed #4CAF50; 
+    background: #f1fff1;
+    border-radius: 4px;
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .tab-btn.active { 
+    font-weight: bold; 
+    background: #007bff;
+    color: white;
+    border-radius: 4px 4px 0 0;
+  }
+  
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .success-highlight {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 12px;
+    border-radius: 4px;
+    margin: 10px 0;
+  }
+  
+  .role-description {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 5px;
+    font-style: italic;
+  }
+  
+  .student-dashboard-link {
+    display: inline-block;
+    background: #28a745;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 4px;
+    margin: 10px 0;
+    transition: background 0.3s;
+  }
+  
+  .student-dashboard-link:hover {
+    background: #218838;
+  }
+  
+  .file-upload-group {
+    margin: 15px 0;
+  }
+  
+  .file-upload-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <h1>Student Management System</h1>
-            <p>Welcome to our comprehensive educational platform</p>
-        </header>
+<div class="container">
+<header class="header">
+  <h1>Student Management System</h1>
+  <p>Welcome to our comprehensive educational platform with real-time analytics</p>
+</header>
 
-        <div class="auth-container">
-            <!-- Loading Indicator -->
-            <div id="loading-indicator" class="loading-indicator hidden">
-                <div class="spinner"></div>
-                <p>Processing...</p>
-            </div>
+<div class="auth-container">
+  <!-- Loading Indicator -->
+  <div id="loading-indicator" class="loading-indicator hidden">
+    <div class="spinner"></div>
+    <p>Processing...</p>
+  </div>
 
-            <!-- Error Display -->
-            <div id="form-error" class="error-message hidden"></div>
+  <!-- Error Display -->
+  <div id="form-error" class="error-message hidden"></div>
+  <div id="success-message" class="success-message hidden"></div>
 
-            <!-- Success Message -->
-            <div id="success-message" class="success-message hidden"></div>
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <button class="tab-btn active" data-tab="login">Login</button>
+    <button class="tab-btn" data-tab="register">Register</button>
+  </div>
 
-            <!-- Tab Navigation -->
-            <div class="tab-navigation">
-                <button class="tab-btn active" onclick="showTab('login')">Login</button>
-                <button class="tab-btn" onclick="showTab('register')">Register</button>
-            </div>
+  <!-- Login Form -->
+  <div id="login-tab" class="tab-content active">
+    <form id="login-form" class="auth-form">
+      <h2>Login to Your Account</h2>
+      <div class="form-group">
+        <input type="email" id="login-email" placeholder="Email Address" required>
+      </div>
+      <div class="form-group">
+        <input type="password" id="login-password" placeholder="Password" required>
+      </div>
+      <button type="submit" class="submit-btn">Login</button>
+      
+      <div class="role-description">
+        Access your role-specific dashboard with real-time performance analytics
+      </div>
+    </form>
+  </div>
 
-            <!-- Login Form -->
-            <div id="login-tab" class="tab-content active">
-                <form id="login-form" class="auth-form">
-                    <h2>Login to Your Account</h2>
-                    <div class="form-group">
-                        <input type="email" id="login-email" placeholder="Email Address" required>
-                    </div>
-                    <div class="form-group">
-                        <input type="password" id="login-password" placeholder="Password" required>
-                    </div>
-                    <button type="submit" class="submit-btn">Login</button>
-                </form>
-            </div>
-
-            <!-- Registration Form -->
-            <div id="register-tab" class="tab-content">
-                <form id="register-form" class="auth-form">
-                    <h2>Create New Account</h2>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <input type="text" id="register-firstname" placeholder="First Name" required>
-                        </div>
-                        <div class="form-group">
-                            <input type="text" id="register-lastname" placeholder="Last Name" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <input type="email" id="register-email" placeholder="Email Address" required>
-                    </div>
-
-                    <div class="form-group">
-                        <input type="password" id="register-password" placeholder="Password (min 6 characters)" required minlength="6">
-                    </div>
-
-                    <div class="form-group">
-                        <input type="text" id="register-identity" placeholder="Identity/ID Number" required>
-                    </div>
-
-                    <div class="form-group">
-                        <input type="tel" id="register-phone" placeholder="Phone Number" required>
-                    </div>
-
-                    <div class="form-group">
-                        <textarea id="register-address" placeholder="Physical Address" required rows="3"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <select id="register-role" required>
-                            <option value="">Select Your Role</option>
-                            <option value="Student">Student</option>
-                            <option value="Teacher">Teacher</option>
-                            <option value="Teacher Assistant">Teacher Assistant</option>
-                            <option value="Parent">Parent</option>
-                            <option value="Principal">Principal</option>
-                            <option value="Admin">Admin</option>
-                            <option value="SGB">SGB Member</option>
-                        </select>
-                    </div>
-
-                    <!-- Student-specific fields -->
-                    <div id="student-fields" class="student-fields hidden">
-                        <h3>Student Documents (Required)</h3>
-                        <div class="file-upload-group">
-                            <label for="student-id-copy">ID Copy (PDF, JPG, PNG):</label>
-                            <input type="file" id="student-id-copy" accept=".pdf,.jpg,.jpeg,.png">
-                        </div>
-                        <div class="file-upload-group">
-                            <label for="student-birth-cert">Birth Certificate (PDF, JPG, PNG):</label>
-                            <input type="file" id="student-birth-cert" accept=".pdf,.jpg,.jpeg,.png">
-                        </div>
-                        <div class="file-upload-group">
-                            <label for="student-clinic-card">Clinic Card (PDF, JPG, PNG):</label>
-                            <input type="file" id="student-clinic-card" accept=".pdf,.jpg,.jpeg,.png">
-                        </div>
-                    </div>
-
-                    <button type="submit" class="submit-btn">Register</button>
-                </form>
-            </div>
+  <!-- Registration Form -->
+  <div id="register-tab" class="tab-content">
+    <form id="register-form" class="auth-form">
+      <h2>Create New Account</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <input type="text" id="register-firstname" placeholder="First Name" required>
         </div>
+        <div class="form-group">
+          <input type="text" id="register-lastname" placeholder="Last Name" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <input type="email" id="register-email" placeholder="Email Address" required>
+      </div>
+      <div class="form-group">
+        <input type="password" id="register-password" placeholder="Password (min 6 chars)" required minlength="6">
+      </div>
+      <div class="form-group">
+        <input type="text" id="register-identity" placeholder="Identity/ID Number" required>
+      </div>
+      <div class="form-group">
+        <input type="tel" id="register-phone" placeholder="Phone Number" required>
+      </div>
+      <div class="form-group">
+        <textarea id="register-address" placeholder="Physical Address" required rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <select id="register-role" required>
+          <option value="">Select Your Role</option>
+          <option value="Student">Student - Access to performance dashboard & teacher ratings</option>
+          <option value="Parent">Parent - Monitor child's progress & communicate with teachers</option>
+          <option value="Teacher">Teacher - Assess students & track performance metrics</option>
+          <option value="Teacher Assistant">Teacher Assistant - Full assessment privileges</option>
+          <option value="Principal">Principal - School management & teacher oversight</option>
+          <option value="Admin">Admin - System administration & user management</option>
+          <option value="SGB">SGB Member - School governance & performance monitoring</option>
+        </select>
+      </div>
+      
+      <!-- Student-specific fields -->
+      <div id="student-specific-fields" class="hidden">
+        <div class="form-group">
+          <input type="text" id="student-grade" placeholder="Grade/Class (e.g., Grade 10A)" required>
+        </div>
+        <div class="form-group">
+          <input type="text" id="student-id" placeholder="Student ID Number" required>
+        </div>
+        
+        <!-- Document uploads for students -->
+        <div class="file-upload-group">
+          <label class="file-upload-label">Required Documents:</label>
+          <div class="form-group">
+            <label for="id-copy">ID Copy:</label>
+            <input type="file" id="id-copy" accept=".pdf,.jpg,.png" required>
+          </div>
+          <div class="form-group">
+            <label for="birth-certificate">Birth Certificate:</label>
+            <input type="file" id="birth-certificate" accept=".pdf,.jpg,.png" required>
+          </div>
+          <div class="form-group">
+            <label for="clinic-card">Clinic Card:</label>
+            <input type="file" id="clinic-card" accept=".pdf,.jpg,.png" required>
+          </div>
+        </div>
+      </div>
+      
+      <button type="submit" class="submit-btn">Register</button>
+    </form>
+
+    <!-- Linked Student Registration (for Parents) -->
+    <div id="linked-student-registration" class="linked-section hidden">
+      <h2>Register Student (Linked to Parent)</h2>
+      <form id="student-form">
+        <div class="form-row">
+          <div class="form-group">
+            <input type="text" id="student-firstname" placeholder="First Name" required>
+          </div>
+          <div class="form-group">
+            <input type="text" id="student-lastname" placeholder="Last Name" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <input type="email" id="student-email" placeholder="Email Address" required>
+        </div>
+        <div class="form-group">
+          <input type="tel" id="student-phone" placeholder="Phone Number" required>
+        </div>
+        <div class="form-group">
+          <textarea id="student-address" placeholder="Physical Address" required rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <input type="text" id="student-grade-linked" placeholder="Grade/Class" required>
+        </div>
+        <div class="form-group">
+          <input type="text" id="student-id-linked" placeholder="Student ID Number" required>
+        </div>
+
+        <!-- Student document uploads -->
+        <div class="file-upload-group">
+          <label class="file-upload-label">Student Documents:</label>
+          <div class="form-group">
+            <label for="student-id-copy">ID Copy:</label>
+            <input type="file" id="student-id-copy" accept=".pdf,.jpg,.png" required>
+          </div>
+          <div class="form-group">
+            <label for="student-birth-certificate">Birth Certificate:</label>
+            <input type="file" id="student-birth-certificate" accept=".pdf,.jpg,.png" required>
+          </div>
+          <div class="form-group">
+            <label for="student-clinic-card">Clinic Card:</label>
+            <input type="file" id="student-clinic-card" accept=".pdf,.jpg,.png" required>
+          </div>
+        </div>
+
+        <div id="student-access" class="link-box hidden">
+          <p><strong>Student Dashboard Access:</strong></p>
+          <a id="studentAccessLink" href="#" target="_blank" class="student-dashboard-link">
+            Open Student Dashboard →
+          </a>
+          <p class="role-description">The student can use this link to access their comprehensive performance dashboard</p>
+        </div>
+
+        <div class="form-group">
+          <input type="text" id="linked-parent-id" placeholder="Parent ID" readonly>
+        </div>
+        <button type="submit" class="submit-btn">Register Student</button>
+      </form>
     </div>
+  </div>
+</div>
+</div>
 
-    <!-- Firebase v10 SDK -->
-    <script type="module" src="firebase-config.js"></script>
-    <script type="module" src="auth.js"></script>
+<!-- Scripts -->
+<script type="module">
+import { auth, db, storage } from './firebase-config.js';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { doc, setDoc, getDoc, serverTimestamp, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
 
-    <script>
-        // Tab switching functionality
-        function showTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Remove active class from all buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Show selected tab
-            document.getElementById(tabName + '-tab').classList.add('active');
-            
-            // Add active class to clicked button
-            event.target.classList.add('active');
-            
-            // Clear any error messages
-            hideMessage('form-error');
-            hideMessage('success-message');
-        }
+// Utility functions
+function showLoading() {
+  document.getElementById('loading-indicator').classList.remove('hidden');
+}
 
-        // Utility functions for showing/hiding messages
-        function showMessage(elementId, message, type = 'error') {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            element.className = type === 'error' ? 'error-message' : 'success-message';
-            element.classList.remove('hidden');
-        }
+function hideLoading() {
+  document.getElementById('loading-indicator').classList.add('hidden');
+}
 
-        function hideMessage(elementId) {
-            document.getElementById(elementId).classList.add('hidden');
-        }
+function showError(message) {
+  const errorDiv = document.getElementById('form-error');
+  errorDiv.textContent = message;
+  errorDiv.classList.remove('hidden');
+  setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+}
 
-        function showLoading() {
-            document.getElementById('loading-indicator').classList.remove('hidden');
-        }
+function showSuccess(message) {
+  const successDiv = document.getElementById('success-message');
+  successDiv.textContent = message;
+  successDiv.classList.remove('hidden');
+  setTimeout(() => successDiv.classList.add('hidden'), 5000);
+}
 
-        function hideLoading() {
-            document.getElementById('loading-indicator').classList.add('hidden');
-        }
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById(this.dataset.tab + '-tab').classList.add('active');
+  });
+});
 
-        // Role change handler
-        document.getElementById('register-role').addEventListener('change', function() {
-            const studentFields = document.getElementById('student-fields');
-            if (this.value === 'Student') {
-                studentFields.classList.remove('hidden');
-                // Make file inputs required for students
-                document.querySelectorAll('#student-fields input[type="file"]').forEach(input => {
-                    input.required = true;
-                });
-            } else {
-                studentFields.classList.add('hidden');
-                // Remove required attribute for non-students
-                document.querySelectorAll('#student-fields input[type="file"]').forEach(input => {
-                    input.required = false;
-                });
+// Show student-specific fields when Student role is selected
+document.getElementById('register-role').addEventListener('change', function() {
+  const studentFields = document.getElementById('student-specific-fields');
+  if (this.value === 'Student') {
+    studentFields.classList.remove('hidden');
+  } else {
+    studentFields.classList.add('hidden');
+  }
+});
+
+// File upload helper
+async function uploadFile(file, path) {
+  const storageRef = ref(storage, path);
+  const snapshot = await uploadBytes(storageRef, file);
+  return await getDownloadURL(snapshot.ref);
+}
+
+// Parent registration
+document.getElementById('register-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  showLoading();
+
+  const role = document.getElementById('register-role').value;
+  const email = document.getElementById('register-email').value;
+  const password = document.getElementById('register-password').value;
+  const firstName = document.getElementById('register-firstname').value;
+  const lastName = document.getElementById('register-lastname').value;
+  const phone = document.getElementById('register-phone').value;
+  const address = document.getElementById('register-address').value;
+  const identity = document.getElementById('register-identity').value;
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+
+    const userData = {
+      firstName, 
+      lastName, 
+      fullName: `${firstName} ${lastName}`,
+      email, 
+      phone, 
+      address, 
+      identity, 
+      role,
+      createdAt: serverTimestamp(),
+      isActive: true
+    };
+
+    // Add role-specific data
+    if (role === 'Student') {
+      userData.grade = document.getElementById('student-grade').value;
+      userData.studentId = document.getElementById('student-id').value;
+      
+      // Upload student documents
+      const idCopy = document.getElementById('id-copy').files[0];
+      const birthCert = document.getElementById('birth-certificate').files[0];
+      const clinicCard = document.getElementById('clinic-card').files[0];
+      
+      if (idCopy && birthCert && clinicCard) {
+        userData.documents = {
+          idCopy: await uploadFile(idCopy, `students/${uid}/id_copy`),
+          birthCertificate: await uploadFile(birthCert, `students/${uid}/birth_certificate`),
+          clinicCard: await uploadFile(clinicCard, `students/${uid}/clinic_card`)
+        };
+      }
+    }
+
+    await setDoc(doc(db, "users", uid), userData);
+
+    hideLoading();
+    
+    if (role === 'Parent') {
+      document.getElementById('linked-parent-id').value = identity;
+      document.getElementById('linked-student-registration').classList.remove('hidden');
+      showSuccess("Parent registered successfully! Now register your child.");
+    } else {
+      showSuccess(`${role} registered successfully! You can now login.`);
+      // Switch to login tab
+      document.querySelector('[data-tab="login"]').click();
+    }
+  } catch (error) {
+    hideLoading();
+    showError("Registration failed: " + error.message);
+  }
+});
+
+// Student registration (for parents)
+document.getElementById('student-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  showLoading();
+
+  const firstName = document.getElementById('student-firstname').value;
+  const lastName = document.getElementById('student-lastname').value;
+  const email = document.getElementById('student-email').value;
+  const phone = document.getElementById('student-phone').value;
+  const address = document.getElementById('student-address').value;
+  const grade = document.getElementById('student-grade-linked').value;
+  const studentId = document.getElementById('student-id-linked').value;
+  const parentID = document.getElementById('linked-parent-id').value;
+  const password = "Student123!"; // Temporary password - student should change
+
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+
+    // Upload student documents
+    const idCopy = document.getElementById('student-id-copy').files[0];
+    const birthCert = document.getElementById('student-birth-certificate').files[0];
+    const clinicCard = document.getElementById('student-clinic-card').files[0];
+    
+    const documents = {};
+    if (idCopy && birthCert && clinicCard) {
+      documents.idCopy = await uploadFile(idCopy, `students/${uid}/id_copy`);
+      documents.birthCertificate = await uploadFile(birthCert, `students/${uid}/birth_certificate`);
+      documents.clinicCard = await uploadFile(clinicCard, `students/${uid}/clinic_card`);
+    }
+
+    await setDoc(doc(db, "users", uid), {
+      firstName, 
+      lastName, 
+      fullName: `${firstName} ${lastName}`,
+      email, 
+      phone, 
+      address, 
+      grade, 
+      studentId,
+      parentID, 
+      role: "Student",
+      documents,
+      createdAt: serverTimestamp(),
+      isActive: true
+    });
+
+    const studentLink = `student-profile.html?uid=${uid}`;
+    document.getElementById('studentAccessLink').href = studentLink;
+    document.getElementById('student-access').classList.remove('hidden');
+    
+    hideLoading();
+    showSuccess("Student registered successfully! Dashboard link is now available.");
+  } catch (error) {
+    hideLoading();
+    showError("Student registration failed: " + error.message);
+  }
+});
+
+// Enhanced Login with comprehensive role routing
+document.getElementById('login-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  showLoading();
+
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+
+    const userDoc = await getDoc(doc(db, "users", uid));
+    
+    if (!userDoc.exists()) {
+      throw new Error("User profile not found. Please contact administrator.");
+    }
+
+    const userData = userDoc.data();
+    const role = userData.role;
+
+    // Store user data in localStorage for dashboard access
+    localStorage.setItem('currentUser', JSON.stringify({
+      uid: uid,
+      role: role,
+      name: userData.fullName || `${userData.firstName} ${userData.lastName}`,
+      email: userData.email
+    }));
+
+    hideLoading();
+
+    // Enhanced role-based routing
+    switch (role) {
+      case "Student":
+        showSuccess(`Welcome ${userData.firstName}! Redirecting to your enhanced dashboard...`);
+        setTimeout(() => {
+          window.location.href = `student-profile.html?uid=${uid}`;
+        }, 1000);
+        break;
+        
+      case "Parent":
+        showSuccess(`Welcome ${userData.firstName}! Redirecting to parent portal...`);
+        setTimeout(() => {
+          window.location.href = "parent-profile.html";
+        }, 1000);
+        break;
+        
+      case "Teacher":
+        showSuccess(`Welcome ${userData.firstName}! Redirecting to teacher dashboard...`);
+        setTimeout(() => {
+          window.location.href = "teacher-profile.html";
+        }, 1000);
+        break;
+        
+      case "Teacher Assistant":
+        showSuccess(`Welcome ${userData.firstName}! Redirecting to TA dashboard...`);
+        setTimeout(() => {
+          window.location.href = "teacher-assistant-profile.html";
+        }, 1000);
+        break;
+        
+      case "Principal":
+        showSuccess(`Welcome ${userData.firstName}! Redirecting to principal dashboard...`);
+        setTimeout(() => {
+          window.location.href = "principal-profile.html";
+        }, 1000);
+        break;
+        
+      case "Admin":
+        showSuccess(`Welcome ${userData.firstName}! Redirecting to admin panel...`);
+        setTimeout(() => {
+          window.location.href = "admin-profile.html";
+        }, 1000);
+        break;
+        
+      case "SGB":
+        showSuccess(`Welcome ${userData.firstName}! Redirecting to SGB dashboard...`);
+        setTimeout(() => {
+          window.location.href = "sgb-profile.html";
+        }, 1000);
+        break;
+        
+      default:
+        showError("Unknown user role. Please contact administrator.");
+    }
+  } catch (error) {
+    hideLoading();
+    showError("Login failed: " + error.message);
+  }
+});
+
+// Check if user is already logged in
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    try {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const role = userData.role;
+        
+        // Auto-redirect if already logged in
+        const currentPage = window.location.pathname;
+        if (currentPage === '/' || currentPage === '/index.html') {
+          // Only redirect if we're on the login page
+          setTimeout(() => {
+            switch (role) {
+              case "Student":
+                window.location.href = `student-profile.html?uid=${user.uid}`;
+                break;
+              case "Parent":
+                window.location.href = "parent-profile.html";
+                break;
+              case "Teacher":
+                window.location.href = "teacher-profile.html";
+                break;
+              case "Teacher Assistant":
+                window.location.href = "teacher-assistant-profile.html";
+                break;
+              case "Principal":
+                window.location.href = "principal-profile.html";
+                break;
+              case "Admin":
+                window.location.href = "admin-profile.html";
+                break;
+              case "SGB":
+                window.location.href = "sgb-profile.html";
+                break;
             }
-        });
-    </script>
+          }, 500);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking auth state:", error);
+    }
+  }
+});
+
+console.log("Enhanced Student Management System initialized successfully");
+</script>
 </body>
 </html>
