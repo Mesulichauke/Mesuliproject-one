@@ -244,6 +244,107 @@
             margin-bottom: 10px;
             box-sizing: border-box;
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .child-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #f9f9f9;
+            transition: all 0.3s ease;
+        }
+
+        .child-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background: white;
+        }
+
+        .child-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .child-card-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-edit {
+            background: #ffc107;
+            color: #212529;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-view {
+            background: #17a2b8;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group-full {
+            grid-column: span 2;
+        }
     </style>
 </head>
 <body>
@@ -269,11 +370,14 @@
                 <p><strong>Address:</strong> <span id="parent-address">Not provided</span></p>
             </div>
             <div class="child-info">
-                <h4>Child Information</h4>
-                <p><strong>Child's Name:</strong> <span id="child-name">John Smith Jr.</span></p>
-                <p><strong>Grade:</strong> <span id="child-grade">Grade 10</span></p>
-                <p><strong>Student ID:</strong> <span id="child-student-id">STU001234</span></p>
-                <p><strong>Class Teacher:</strong> <span id="child-teacher">Ms. Johnson</span></p>
+                <h4>Children Management</h4>
+                <div class="management-controls" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button onclick="showAddStudentForm()" style="background: #28a745; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer;">➕ Add Child</button>
+                    <button onclick="refreshChildrenList()" style="background: #007bff; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer;">🔄 Refresh</button>
+                </div>
+                <div id="children-list" class="children-grid">
+                    <!-- Children will be loaded dynamically -->
+                </div>
             </div>
         </div>
     </div>
@@ -501,11 +605,86 @@
         </div>
     </div>
 
+    <!-- Add Student Modal -->
+    <div id="add-student-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Child</h3>
+                <button onclick="hideAddStudentForm()" class="close-btn">✕</button>
+            </div>
+            <form id="add-student-form">
+                <div class="form-grid">
+                    <input type="text" id="new-student-firstname" placeholder="First Name" required>
+                    <input type="text" id="new-student-lastname" placeholder="Last Name" required>
+                </div>
+                <input type="email" id="new-student-email" placeholder="Email Address" required class="form-group-full">
+                <div class="form-grid">
+                    <input type="tel" id="new-student-phone" placeholder="Phone Number" required>
+                    <input type="text" id="new-student-grade" placeholder="Grade/Class" required>
+                </div>
+                <input type="text" id="new-student-id" placeholder="Student ID" required class="form-group-full">
+                <textarea id="new-student-address" placeholder="Physical Address" rows="3" class="form-group-full"></textarea>
+                
+                <div style="margin: 20px 0;">
+                    <label style="font-weight: bold; display: block; margin-bottom: 10px;">Required Documents:</label>
+                    <div style="margin-bottom: 10px;">
+                        <label>ID Copy:</label>
+                        <input type="file" id="new-id-copy" accept=".pdf,.jpg,.png" required>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label>Birth Certificate:</label>
+                        <input type="file" id="new-birth-certificate" accept=".pdf,.jpg,.png" required>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label>Clinic Card:</label>
+                        <input type="file" id="new-clinic-card" accept=".pdf,.jpg,.png" required>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="submit" style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Add Child</button>
+                    <button type="button" onclick="hideAddStudentForm()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Student Modal -->
+    <div id="edit-student-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Child Information</h3>
+                <button onclick="hideEditStudentForm()" class="close-btn">✕</button>
+            </div>
+            <form id="edit-student-form">
+                <input type="hidden" id="edit-student-uid">
+                <div class="form-grid">
+                    <input type="text" id="edit-student-firstname" placeholder="First Name" required>
+                    <input type="text" id="edit-student-lastname" placeholder="Last Name" required>
+                </div>
+                <input type="email" id="edit-student-email" placeholder="Email Address" required class="form-group-full">
+                <div class="form-grid">
+                    <input type="tel" id="edit-student-phone" placeholder="Phone Number" required>
+                    <input type="text" id="edit-student-grade" placeholder="Grade/Class" required>
+                </div>
+                <input type="text" id="edit-student-id" placeholder="Student ID" required class="form-group-full">
+                <textarea id="edit-student-address" placeholder="Physical Address" rows="3" class="form-group-full"></textarea>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="submit" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Update Information</button>
+                    <button type="button" onclick="hideEditStudentForm()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js';
         import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js';
-        import { getFirestore, doc, getDoc, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, collection, addDoc, query, where, getDocs, updateDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js';
+        import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js';
 
         // Firebase configuration
         const firebaseConfig = {
@@ -522,6 +701,9 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        let currentParentData = null;
 
         // Check authentication and role
         onAuthStateChanged(auth, async (user) => {
@@ -552,6 +734,7 @@
 
         // Load parent data
         function loadParentData(userData, user) {
+            currentParentData = { ...userData, uid: user.uid };
             document.getElementById('parent-name').textContent = userData.firstName || 'Parent';
             document.getElementById('parent-full-name').textContent = `${userData.firstName} ${userData.lastName}` || 'Not provided';
             document.getElementById('parent-email').textContent = user.email;
@@ -562,6 +745,111 @@
             if (userData.address) {
                 document.getElementById('parent-address').textContent = userData.address;
             }
+
+            // Load children list
+            loadChildrenList();
+        }
+
+        // Load children linked to this parent
+        async function loadChildrenList() {
+            try {
+                const childrenQuery = query(
+                    collection(db, 'users'),
+                    where('role', '==', 'Student'),
+                    where('parentID', '==', currentParentData.identity)
+                );
+                
+                const childrenSnapshot = await getDocs(childrenQuery);
+                const children = childrenSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                displayChildren(children);
+            } catch (error) {
+                console.error('Error loading children:', error);
+                document.getElementById('children-list').innerHTML = '<p>Error loading children list.</p>';
+            }
+        }
+
+        // Display children in the UI
+        function displayChildren(children) {
+            const childrenList = document.getElementById('children-list');
+            
+            if (children.length === 0) {
+                childrenList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No children registered yet. Click "Add Child" to get started.</p>';
+                return;
+            }
+
+            childrenList.innerHTML = children.map(child => `
+                <div class="child-card">
+                    <div class="child-card-header">
+                        <h4>${child.firstName} ${child.lastName}</h4>
+                        <div class="child-card-actions">
+                            <button onclick="editStudent('${child.id}')" class="btn-edit">✏️ Edit</button>
+                            <button onclick="viewStudentProfile('${child.id}')" class="btn-view">👁️ View Dashboard</button>
+                        </div>
+                    </div>
+                    <div class="child-details">
+                        <p><strong>Email:</strong> ${child.email}</p>
+                        <p><strong>Grade:</strong> ${child.grade || 'Not specified'}</p>
+                        <p><strong>Student ID:</strong> ${child.studentId || 'Not specified'}</p>
+                        <p><strong>Phone:</strong> ${child.phone || 'Not specified'}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Modal management functions
+        window.showAddStudentForm = function() {
+            document.getElementById('add-student-modal').style.display = 'block';
+        };
+
+        window.hideAddStudentForm = function() {
+            document.getElementById('add-student-modal').style.display = 'none';
+            document.getElementById('add-student-form').reset();
+        };
+
+        window.hideEditStudentForm = function() {
+            document.getElementById('edit-student-modal').style.display = 'none';
+            document.getElementById('edit-student-form').reset();
+        };
+
+        window.refreshChildrenList = function() {
+            loadChildrenList();
+        };
+
+        window.editStudent = async function(studentId) {
+            try {
+                const studentDoc = await getDoc(doc(db, 'users', studentId));
+                if (studentDoc.exists()) {
+                    const studentData = studentDoc.data();
+                    
+                    // Populate edit form
+                    document.getElementById('edit-student-uid').value = studentId;
+                    document.getElementById('edit-student-firstname').value = studentData.firstName || '';
+                    document.getElementById('edit-student-lastname').value = studentData.lastName || '';
+                    document.getElementById('edit-student-email').value = studentData.email || '';
+                    document.getElementById('edit-student-phone').value = studentData.phone || '';
+                    document.getElementById('edit-student-grade').value = studentData.grade || '';
+                    document.getElementById('edit-student-id').value = studentData.studentId || '';
+                    document.getElementById('edit-student-address').value = studentData.address || '';
+                    
+                    // Show edit modal
+                    document.getElementById('edit-student-modal').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading student data:', error);
+                alert('Error loading student data. Please try again.');
+            }
+        };
+
+        window.viewStudentProfile = function(studentId) {
+            window.open(`student-profile.html?uid=${studentId}`, '_blank');
+        };
+
+        // File upload helper
+        async function uploadFile(file, path) {
+            const storageRef = ref(storage, path);
+            const snapshot = await uploadBytes(storageRef, file);
+            return await getDownloadURL(snapshot.ref);
         }
 
         // Global functions
@@ -583,6 +871,98 @@
 
         // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
+            // Add student form submission
+            document.getElementById('add-student-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const firstName = document.getElementById('new-student-firstname').value;
+                const lastName = document.getElementById('new-student-lastname').value;
+                const email = document.getElementById('new-student-email').value;
+                const phone = document.getElementById('new-student-phone').value;
+                const grade = document.getElementById('new-student-grade').value;
+                const studentId = document.getElementById('new-student-id').value;
+                const address = document.getElementById('new-student-address').value;
+                const password = "Student123!"; // Temporary password
+
+                try {
+                    // Create student account
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const uid = userCredential.user.uid;
+
+                    // Upload documents
+                    const documents = {};
+                    const idCopy = document.getElementById('new-id-copy').files[0];
+                    const birthCert = document.getElementById('new-birth-certificate').files[0];
+                    const clinicCard = document.getElementById('new-clinic-card').files[0];
+                    
+                    if (idCopy && birthCert && clinicCard) {
+                        documents.idCopy = await uploadFile(idCopy, `students/${uid}/id_copy`);
+                        documents.birthCertificate = await uploadFile(birthCert, `students/${uid}/birth_certificate`);
+                        documents.clinicCard = await uploadFile(clinicCard, `students/${uid}/clinic_card`);
+                    }
+
+                    // Save student data
+                    await setDoc(doc(db, "users", uid), {
+                        firstName, 
+                        lastName, 
+                        fullName: `${firstName} ${lastName}`,
+                        email, 
+                        phone, 
+                        address, 
+                        grade, 
+                        studentId,
+                        parentID: currentParentData.identity,
+                        role: "Student",
+                        documents,
+                        createdAt: serverTimestamp(),
+                        isActive: true
+                    });
+
+                    hideAddStudentForm();
+                    loadChildrenList();
+                    alert('Child added successfully!');
+                } catch (error) {
+                    console.error('Error adding student:', error);
+                    alert('Error adding student: ' + error.message);
+                }
+            });
+
+            // Edit student form submission
+            document.getElementById('edit-student-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const studentUid = document.getElementById('edit-student-uid').value;
+                const firstName = document.getElementById('edit-student-firstname').value;
+                const lastName = document.getElementById('edit-student-lastname').value;
+                const email = document.getElementById('edit-student-email').value;
+                const phone = document.getElementById('edit-student-phone').value;
+                const grade = document.getElementById('edit-student-grade').value;
+                const studentId = document.getElementById('edit-student-id').value;
+                const address = document.getElementById('edit-student-address').value;
+
+                try {
+                    // Update student data
+                    await updateDoc(doc(db, "users", studentUid), {
+                        firstName, 
+                        lastName, 
+                        fullName: `${firstName} ${lastName}`,
+                        email, 
+                        phone, 
+                        address, 
+                        grade, 
+                        studentId,
+                        updatedAt: serverTimestamp()
+                    });
+
+                    hideEditStudentForm();
+                    loadChildrenList();
+                    alert('Child information updated successfully!');
+                } catch (error) {
+                    console.error('Error updating student:', error);
+                    alert('Error updating student: ' + error.message);
+                }
+            });
+
             // Teacher message form
             document.getElementById('teacher-message-form').addEventListener('submit', async function(e) {
                 e.preventDefault();
