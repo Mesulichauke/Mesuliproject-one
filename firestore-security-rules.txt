@@ -1,0 +1,242 @@
+// Firestore Security Rules for Student Management System
+// These rules enforce exactly the permissions described in the requirements
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isStudent() {
+      return getUserRole() == 'Student';
+    }
+    
+    function isTeacher() {
+      return getUserRole() == 'Teacher';
+    }
+    
+    function isTeacherAssistant() {
+      return getUserRole() == 'Teacher Assistant';
+    }
+    
+    function isTeacherOrTA() {
+      return isTeacher() || isTeacherAssistant();
+    }
+    
+    function isPrincipal() {
+      return getUserRole() == 'Principal';
+    }
+    
+    function isAdmin() {
+      return getUserRole() == 'Admin';
+    }
+    
+    function isSGB() {
+      return getUserRole() == 'SGB';
+    }
+    
+    function isParent() {
+      return getUserRole() == 'Parent';
+    }
+    
+    function hasElevatedAccess() {
+      return isPrincipal() || isAdmin();
+    }
+    
+    // Users collection - basic profile information
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == userId || // Own profile
+        hasElevatedAccess() || // Principals and Admins can read all
+        isSGB() // SGB read-only access to user profiles
+      );
+      
+      allow write: if isAuthenticated() && (
+        request.auth.uid == userId || // Own profile
+        hasElevatedAccess() // Only Principals and Admins can modify other users
+      );
+    }
+    
+    // Students subcollection - detailed student data
+    match /students/{studentId} {
+      // Basic student document
+      allow read: if isAuthenticated() && (
+        request.auth.uid == studentId || // Student reading own data
+        hasElevatedAccess() || // Principals and Admins
+        isTeacherOrTA() || // Teachers and TAs need access to student data
+        isSGB() // SGB read-only access
+      );
+      
+      allow write: if hasElevatedAccess(); // Only Principals and Admins can modify student records
+      
+      // Assessments subcollection - academic evaluations
+      match /assessments/{assessmentId} {
+        allow read: if isAuthenticated() && (
+          request.auth.uid == studentId || // Student reading own assessments
+          hasElevatedAccess() || // Principals and Admins
+          isTeacherOrTA() || // Teachers and TAs can read assessments they created
+          isSGB() // SGB read-only access
+        );
+        
+        // Teachers and TAs can write assessments (this affects teacher performance automatically)
+        allow create, update: if isAuthenticated() && isTeacherOrTA() && 
+          request.resource.data.teacherUID == request.auth.uid; // Only create assessments as themselves
+        
+        allow delete: if hasElevatedAccess(); // Only Principals and Admins can delete assessments
+      }
+      
+      // Attendance subcollection
+      match /attendance/{attendanceId} {
+        allow read: if isAuthenticated() && (
+          request.auth.uid == studentId ||
+          hasElevatedAccess() ||
+          isTeacherOrTA() ||
+          isSGB()
+        );
+        
+        allow write: if isAuthenticated() && isTeacherOrTA(); // Teachers and TAs manage attendance
+      }
+      
+      // Behavior subcollection
+      match /behavior/{behaviorId} {
+        allow read: if isAuthenticated() && (
+          request.auth.uid == studentId ||
+          hasElevatedAccess() ||
+          isTeacherOrTA() ||
+          isSGB()
+        );
+        
+        allow write: if isAuthenticated() && isTeacherOrTA(); // Teachers and TAs manage behavior records
+      }
+      
+      // Activities subcollection - homework, quizzes, assignments
+      match /activities/{activityId} {
+        allow read: if isAuthenticated() && (
+          request.auth.uid == studentId ||
+          hasElevatedAccess() ||
+          isTeacherOrTA() ||
+          isSGB()
+        );
+        
+        allow write: if isAuthenticated() && isTeacherOrTA(); // Teachers and TAs create and manage activities
+      }
+      
+      // Student's teacher ratings - affects teacher performance
+      match /myTeacherRatings/{teacherRatingId} {
+        allow read: if isAuthenticated() && (
+          request.auth.uid == studentId || // Student reading own ratings
+          hasElevatedAccess() || // Principals and Admins
+          isSGB() // SGB read-only access
+        );
+        
+        // Students can rate teachers (this automatically updates teacher performance)
+        allow write: if isAuthenticated() && request.auth.uid == studentId;
+      }
+    }
+    
+    // Teachers collection - teacher performance and rating data
+    match /teachers/{teacherId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == teacherId || // Teacher reading own data
+        hasElevatedAccess() || // Principals and Admins
+        isSGB() // SGB read-only access for performance monitoring
+      );
+      
+      allow write: if hasElevatedAccess(); // Only Principals and Admins can modify teacher records
+      
+      // Teacher ratings from students
+      match /ratings/{ratingId} {
+        allow read: if isAuthenticated() && (
+          request.auth.uid == teacherId ||
+          hasElevatedAccess() ||
+          isSGB()
+        );
+        
+        // Students submit ratings that automatically populate here
+        allow write: if isAuthenticated() && isStudent();
+      }
+      
+      // Teacher performance metrics (calculated from student assessments and ratings)
+      match /performance/{performanceId} {
+        allow read: if isAuthenticated() && (
+          request.auth.uid == teacherId ||
+          hasElevatedAccess() ||
+          isSGB()
+        );
+        
+        // System-calculated, only Admins can manually adjust
+        allow write: if isAdmin();
+      }
+    }
+    
+    // Principals collection - principal performance data
+    match /principals/{principalId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == principalId ||
+        hasElevatedAccess() ||
+        isSGB() // SGB monitors principal performance
+      );
+      
+      allow write: if isAdmin() || isSGB(); // Admins and SGB can update principal data
+      
+      // Principal performance metrics
+      match /performance/{performanceId} {
+        allow read: if isAuthenticated() && (
+          request.auth.uid == principalId ||
+          hasElevatedAccess() ||
+          isSGB()
+        );
+        
+        allow write: if isSGB() || isAdmin(); // SGB rates principals
+      }
+    }
+    
+    // SGB collection - SGB commitment and performance tracking
+    match /sgb/{sgbId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == sgbId ||
+        hasElevatedAccess() ||
+        isSGB() // SGB members can read SGB data
+      );
+      
+      allow write: if isAdmin(); // Only Admins can modify SGB records
+      
+      // SGB commitment tracking
+      match /commitment/{commitmentId} {
+        allow read: if isAuthenticated() && (
+          request.auth.uid == sgbId ||
+          hasElevatedAccess() ||
+          isSGB()
+        );
+        
+        allow write: if isSGB() || isAdmin(); // SGB can update their own commitment data
+      }
+    }
+    
+    // School announcements
+    match /announcements/{announcementId} {
+      allow read: if isAuthenticated(); // All authenticated users can read announcements
+      
+      allow write: if hasElevatedAccess() || isTeacherOrTA(); // Teachers+ can create announcements
+    }
+    
+    // System settings and configurations
+    match /settings/{settingId} {
+      allow read: if hasElevatedAccess();
+      allow write: if isAdmin(); // Only Admins can modify system settings
+    }
+    
+    // Audit logs for tracking changes
+    match /audit/{auditId} {
+      allow read: if isAdmin(); // Only Admins can read audit logs
+      allow write: if false; // System-generated only, no manual writes
+    }
+  }
+}

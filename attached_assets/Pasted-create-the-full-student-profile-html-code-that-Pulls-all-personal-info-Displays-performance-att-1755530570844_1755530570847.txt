@@ -1,0 +1,27 @@
+create the full student-profile.html code that:
+
+Pulls all personal info.
+
+Displays performance, attendance, behavior.
+ytics for all periods (daily → yearly).
+
+Shows anal
+Includes feedback for teachers.
+
+Allows teacher scoring to update the dashboard automatically. on the teacher's profile make the infomation entered for student profile to populate on the student profile and that info to be also use to rate the teachers perfomance and also ratings entered by student to populate on the teachers profile, teacher assistant profile to have same previllages as the teacher and also run daily activities and quizes incuding home works for kids on daily bases and monitor those and the results will also populate on the teacher assistant profile. then the principal profile should have admin right as well and be measured by the teachers perfomance and should also have an overview of everything and be able to pull reports for all profiles, have budget reports and forms to fill in when budget is used be able to send alerts on all profiles. on the admin, the admin must be able to add, edit and delete users, send alerts, schedule meetings, send news letters and have budget reports and be able to pull all reports. sgb should only have a view of anylitics, budget report and be able to pull perfomance report for all profiles.Generate the Teacher Profile page that shows their incoming student ratings and class analytics.
+
+Provide Firestore security rules to enforce exactly these permissions (students can rate, teachers/assistants can write student assessments, principals/admins have broader rights, SGB read-only dashboards). make sure It:
+
+Loads the student by ?uid=... (or falls back to the signed-in student).
+
+Pulls personal info (users/{uid}).
+
+Live-updates performance, attendance, behavior from students/{uid}/... subcollections.
+
+Builds analytics (daily → yearly) from actual assessment data.
+
+Lets students rate teachers (stores in teachers/{teacherUid}/ratings and students/{uid}/myTeacherRatings).
+
+Automatically reflects teacher/TA scoring on the dashboard via realtime listeners (assessments written by teachers/TAs into students/{uid}/assessments appear instantly).
+
+Includes graceful fallbacks and clear inline comments.

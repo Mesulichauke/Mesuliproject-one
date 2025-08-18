@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Assistant Profile</title>
+    <title>Teacher Assistant Profile - Enhanced</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
@@ -398,6 +398,111 @@
             </div>
         </div>
 
+        <!-- Student Assessment Section (Same privileges as Teacher) -->
+        <div class="profile-section">
+            <div class="section-header" onclick="toggleSection('student-assessment')">
+                <h3>Student Assessment & Daily Activities</h3>
+            </div>
+            <div id="student-assessment" class="section-content">
+                <div class="form-group">
+                    <h4>Record Student Assessment</h4>
+                    <form id="assessment-form">
+                        <div class="form-group">
+                            <label for="student-select">Select Student:</label>
+                            <select id="student-select" required>
+                                <option value="">Choose a student...</option>
+                                <option value="student1">John Doe - Grade 10A</option>
+                                <option value="student2">Jane Smith - Grade 10A</option>
+                                <option value="student3">Mike Johnson - Grade 10B</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="assessment-subject">Subject:</label>
+                            <select id="assessment-subject" required>
+                                <option value="">Select subject...</option>
+                                <option value="Mathematics">Mathematics</option>
+                                <option value="Science">Science</option>
+                                <option value="English">English</option>
+                                <option value="History">History</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="assessment-type">Assessment Type:</label>
+                            <select id="assessment-type" required>
+                                <option value="">Select type...</option>
+                                <option value="Quiz">Quiz</option>
+                                <option value="Test">Test</option>
+                                <option value="Homework">Homework</option>
+                                <option value="Project">Project</option>
+                                <option value="Participation">Class Participation</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="assessment-score">Score (%):</label>
+                            <input type="number" id="assessment-score" min="0" max="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="assessment-feedback">Feedback (Optional):</label>
+                            <textarea id="assessment-feedback" rows="3" placeholder="Enter feedback for the student..."></textarea>
+                        </div>
+                        <button type="submit" class="btn">Submit Assessment</button>
+                    </form>
+                    <div id="assessment-status"></div>
+                </div>
+
+                <div class="form-group">
+                    <h4>Create Daily Activity/Assignment</h4>
+                    <form id="activity-form">
+                        <div class="form-group">
+                            <label for="activity-title">Activity Title:</label>
+                            <input type="text" id="activity-title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="activity-subject">Subject:</label>
+                            <select id="activity-subject" required>
+                                <option value="">Select subject...</option>
+                                <option value="Mathematics">Mathematics</option>
+                                <option value="Science">Science</option>
+                                <option value="English">English</option>
+                                <option value="History">History</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="activity-type">Activity Type:</label>
+                            <select id="activity-type" required>
+                                <option value="">Select type...</option>
+                                <option value="Homework">Homework</option>
+                                <option value="Quiz">Quiz</option>
+                                <option value="Reading">Reading Assignment</option>
+                                <option value="Practice">Practice Exercise</option>
+                                <option value="Research">Research Project</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="activity-description">Description:</label>
+                            <textarea id="activity-description" rows="3" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="activity-due-date">Due Date:</label>
+                            <input type="datetime-local" id="activity-due-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="activity-students">Assign to Students:</label>
+                            <select id="activity-students" multiple size="5">
+                                <option value="all">All Students in Class</option>
+                                <option value="student1">John Doe - Grade 10A</option>
+                                <option value="student2">Jane Smith - Grade 10A</option>
+                                <option value="student3">Mike Johnson - Grade 10B</option>
+                            </select>
+                            <small>Hold Ctrl/Cmd to select multiple students</small>
+                        </div>
+                        <button type="submit" class="btn">Create Activity</button>
+                    </form>
+                    <div id="activity-status"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Schedule -->
         <div class="profile-section">
             <div class="section-header" onclick="toggleSection('schedule')">
@@ -471,7 +576,19 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js';
         import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js';
-        import { getFirestore, doc, getDoc, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js';
+        import { 
+            getFirestore, 
+            doc, 
+            getDoc, 
+            collection, 
+            addDoc, 
+            setDoc,
+            serverTimestamp,
+            query,
+            where,
+            getDocs
+        } from 'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js';
+        import { updateTeacherPerformanceFromAssessment } from './teacher-performance-utils.js';
 
         // Firebase configuration
         const firebaseConfig = {
@@ -524,6 +641,120 @@
             
             if (userData.phone) {
                 document.getElementById('ta-phone').textContent = userData.phone;
+            }
+
+            // Setup assessment forms with user data
+            setupAssessmentForms(user.uid);
+        }
+
+        // Setup assessment form functionality for Teacher Assistant (same privileges as Teacher)
+        function setupAssessmentForms(currentUserUID) {
+            try {
+                // Assessment form submission
+                const assessmentForm = document.getElementById('assessment-form');
+                if (assessmentForm) {
+                    assessmentForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        
+                        const formData = {
+                            studentId: document.getElementById('student-select').value,
+                            subject: document.getElementById('assessment-subject').value,
+                            type: document.getElementById('assessment-type').value,
+                            score: parseInt(document.getElementById('assessment-score').value),
+                            feedback: document.getElementById('assessment-feedback').value,
+                            teacherUID: currentUserUID,
+                            teacherRole: 'Teacher Assistant',
+                            teacherName: 'Teacher Assistant',
+                            createdAt: serverTimestamp()
+                        };
+
+                        try {
+                            const statusDiv = document.getElementById('assessment-status');
+                            statusDiv.innerHTML = '<div class="loading">Submitting assessment...</div>';
+
+                            // Generate assessment ID
+                            const assessmentId = 'assessment_' + Date.now();
+                            
+                            // Save assessment to student's record (this automatically affects TA performance)
+                            await setDoc(doc(db, 'students', formData.studentId, 'assessments', assessmentId), formData);
+                            
+                            statusDiv.innerHTML = '<div class="success-message">Assessment submitted successfully! Performance metrics updated automatically.</div>';
+                            assessmentForm.reset();
+                            
+                        } catch (error) {
+                            console.error('Error submitting assessment:', error);
+                            document.getElementById('assessment-status').innerHTML = '<div class="error-message">Error submitting assessment. Please try again.</div>';
+                        }
+                    });
+                }
+
+                // Activity form submission
+                const activityForm = document.getElementById('activity-form');
+                if (activityForm) {
+                    activityForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        
+                        const formData = {
+                            title: document.getElementById('activity-title').value,
+                            subject: document.getElementById('activity-subject').value,
+                            type: document.getElementById('activity-type').value,
+                            description: document.getElementById('activity-description').value,
+                            dueDate: new Date(document.getElementById('activity-due-date').value),
+                            assignedBy: currentUserUID,
+                            assignedByRole: 'Teacher Assistant',
+                            createdAt: serverTimestamp(),
+                            status: 'assigned'
+                        };
+
+                        const selectedStudents = Array.from(document.getElementById('activity-students').selectedOptions).map(option => option.value);
+
+                        try {
+                            const statusDiv = document.getElementById('activity-status');
+                            statusDiv.innerHTML = '<div class="loading">Creating activity...</div>';
+
+                            // If "all" is selected, assign to all students in class
+                            if (selectedStudents.includes('all')) {
+                                // Get all students (simplified for demo)
+                                const studentsQuery = query(
+                                    collection(db, 'users'),
+                                    where('role', '==', 'Student')
+                                );
+                                
+                                const studentsSnapshot = await getDocs(studentsQuery);
+                                const students = studentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                
+                                // Assign activity to each student
+                                for (const student of students) {
+                                    const activityId = 'activity_' + Date.now() + '_' + student.id;
+                                    await setDoc(doc(db, 'students', student.id, 'activities', activityId), {
+                                        ...formData,
+                                        studentId: student.id
+                                    });
+                                }
+                            } else {
+                                // Assign to selected students
+                                for (const studentId of selectedStudents) {
+                                    if (studentId !== 'all') {
+                                        const activityId = 'activity_' + Date.now() + '_' + studentId;
+                                        await setDoc(doc(db, 'students', studentId, 'activities', activityId), {
+                                            ...formData,
+                                            studentId: studentId
+                                        });
+                                    }
+                                }
+                            }
+                            
+                            statusDiv.innerHTML = '<div class="success-message">Activity created and assigned successfully!</div>';
+                            activityForm.reset();
+                            
+                        } catch (error) {
+                            console.error('Error creating activity:', error);
+                            document.getElementById('activity-status').innerHTML = '<div class="error-message">Error creating activity. Please try again.</div>';
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error setting up assessment forms:', error);
             }
         }
 
