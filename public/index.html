@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Management System - Login & Register</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .hidden { display: none; }
+  .linked-section { 
+    margin-top: 20px; 
+    padding: 15px; 
+    border: 1px solid #ccc; 
+    border-radius: 6px; 
+    background: #f9f9f9; 
+    animation: slideIn 0.3s ease-in;
+  }
+  .link-box { 
+    margin-top: 15px; 
+    padding: 10px; 
+    border: 1px dashed #4CAF50; 
+    background: #f1fff1;
+    border-radius: 4px;
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .tab-btn.active { 
+    font-weight: bold; 
+    background: #007bff;
+    color: white;
+    border-radius: 4px 4px 0 0;
+  }
+  
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .success-highlight {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 12px;
+    border-radius: 4px;
+    margin: 10px 0;
+  }
+  
+  .role-description {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 5px;
+    font-style: italic;
+  }
+  
+  .student-dashboard-link {
+    display: inline-block;
+    background: #28a745;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 4px;
+    margin: 10px 0;
+    transition: background 0.3s;
+  }
+  
+  .student-dashboard-link:hover {
+    background: #218838;
+  }
+  
+  .file-upload-group {
+    margin: 15px 0;
+  }
+  
+  .file-upload-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+<header class="header">
+  <h1>Student Management System</h1>
+  <p>Welcome to our comprehensive educational platform with real-time analytics</p>
+</header>
+
+<div class="auth-container">
+  <!-- Loading Indicator -->
+  <div id="loading-indicator" class="loading-indicator hidden">
+    <div class="spinner"></div>
+    <p>Processing...</p>
+  </div>
+
+  <!-- Error Display -->
+  <div id="form-error" class="error-message hidden"></div>
+  <div id="success-message" class="success-message hidden"></div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <button class="tab-btn active" data-tab="login">Login</button>
+    <button class="tab-btn" data-tab="register">Register</button>
+  </div>
+
+  <!-- Login Form -->
+  <div id="login-tab" class="tab-content active">
+    <form id="login-form" class="auth-form">
+      <h2>Login to Your Account</h2>
+      <div class="form-group">
+        <input type="email" id="login-email" placeholder="Email Address" required>
+      </div>
+      <div class="form-group">
+        <input type="password" id="login-password" placeholder="Password" required>
+      </div>
+      <button type="submit" class="submit-btn">Login</button>
+      
+      <div class="role-description">
+        Access your role-specific dashboard with real-time performance analytics
+      </div>
+    </form>
+  </div>
+
+  <!-- Registration Form -->
+  <div id="register-tab" class="tab-content">
+    <form id="register-form" class="auth-form">
+      <h2>Create New Account</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <input type="text" id="register-firstname" placeholder="First Name" required>
+        </div>
+        <div class="form-group">
+          <input type="text" id="register-lastname" placeholder="Last Name" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <input type="email" id="register-email" placeholder="Email Address" required>
+      </div>
+      <div class="form-group">
+        <input type="password" id="register-password" placeholder="Password (min 6 chars)" required minlength="6">
+      </div>
+      <div class="form-group">
+        <input type="text" id="register-identity" placeholder="Identity/ID Number" required>
+      </div>
+      <div class="form-group">
+        <input type="tel" id="register-phone" placeholder="Phone Number" required>
+      </div>
+      <div class="form-group">
+        <textarea id="register-address" placeholder="Physical Address" required rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <select id="register-role" required>
+          <option value="">Select Your Role</option>
+          <option value="Student">Student - Access to performance dashboard & teacher ratings</option>
+          <option value="Parent">Parent - Monitor child's progress & communicate with teachers</option>
+          <option value="Teacher">Teacher - Assess students & track performance metrics</option>
+          <option value="Teacher Assistant">Teacher Assistant - Full assessment privileges</option>
+          <option value="Principal">Principal - School management & teacher oversight</option>
+          <option value="Admin">Admin - System administration & user management</option>
+          <option value="SGB">SGB Member - School governance & performance monitoring</option>
+        </select>
+      </div>
+      
+      <!-- Student-specific fields -->
+      <div id="student-specific-fields" class="hidden">
+        <div class="form-group">
+          <input type="text" id="student-grade" placeholder="Grade/Class (e.g., Grade 10A)" required>
+        </div>
+        <div class="form-group">
+          <input type="text" id="student-id" placeholder="Student ID Number" required>
+        </div>
+        
+        <!-- Document uploads for students -->
+        <div class="file-upload-group">
+          <label class="file-upload-label">Required Documents:</label>
+          <div class="form-group">
+            <label for="id-copy">ID Copy:</label>
+            <input type="file" id="id-copy" accept=".pdf,.jpg,.png" required>
+          </div>
+          <div class="form-group">
+            <label for="birth-certificate">Birth Certificate:</label>
+            <input type="file" id="birth-certificate" accept=".pdf,.jpg,.png" required>
+          </div>
+          <div class="form-group">
+            <label for="clinic-card">Clinic Card:</label>
+            <input type="file" id="clinic-card" accept=".pdf,.jpg,.png" required>
+          </div>
+        </div>
+      </div>
+      
+      <button type="submit" class="submit-btn">Register</button>
+  </form>
+    <div id="linked-student-registration" class="linked-section hidden">
+      <h2>📚 Register Your Child (Student Account)</h2>
+  <p class="linked-description">Complete your child's student profile to provide them with access to their comprehensive dashboard.</p>
+      <form id="student-form">
+        <div class="form-row">
+          <div class="form-group">
+            <input type="text" id="student-firstname" name="student-firstname" placeholder="Student's First Name" required>
+          </div>
+          <div class="form-group">
+            <input type="text" id="student-lastname" placeholder="Student's Last Name" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="file-upload-label">Date of Birth</label>
+            <input type="date" id="student-dob" required>
+          </div>
+          <div class="form-group">
+            <label class="file-upload-label">Gender</label>
+            <select id="student-gender" required>
+              <option value="">Select</option>
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <input type="text" id="student-nationality" placeholder="Nationality">
+          </div>
+          <div class="form-group">
+            <input type="text" id="student-id-number" placeholder="Official ID Number (if different)">
+          </div>
+        </div>
+
+        <!-- Student document uploads -->
+        <div class="file-upload-group">
+          <label class="file-upload-label">Student Documents:</label>
+          <div class="form-group">
+            <label for="student-id-copy">ID Copy:</label>
+            <input type="file" id="student-id-copy" accept=".pdf,.jpg,.png" required>
+          </div>
+          <div class="form-group">
+            <label for="student-birth-certificate">Birth Certificate:</label>
+            <input type="file" id="student-birth-certificate" accept=".pdf,.jpg,.png" required>
+          </div>
+          <div class="form-group">
+            <label for="student-clinic-card">Clinic Card (optional):</label>
+            <input type="file" id="student-clinic-card" accept=".pdf,.jpg,.png">
+          </div>
+          <div class="form-group">
+            <label for="student-id-photo">ID Photo (passport-style):</label>
+            <input type="file" id="student-id-photo" accept=".jpg,.jpeg,.png" required>
+          </div>
+        </div>
+
+        <div id="student-access" class="link-box hidden">
+          <p><strong>Student Dashboard Access:</strong></p>
+          <a id="studentAccessLink" href="#" target="_blank" class="student-dashboard-link">
+            Open Student Dashboard →
+          </a>
+          <p class="role-description">The student can use this link to access their comprehensive performance dashboard</p>
+        </div>
+
+        <div class="form-group">
+          <label class="strong-label">Parent ID (Auto-filled):</label>
+          <input type="text" id="linked-parent-id" placeholder="Parent ID" readonly class="readonly-input">
+        </div>
+        <div class="form-group">
+          <input type="email" id="student-email" placeholder="Email Address" required>
+        </div>
+        <div class="form-group">
+          <input type="tel" id="student-phone" placeholder="Phone Number" required>
+        </div>
+        <div class="form-group">
+          <textarea id="student-address" placeholder="Physical Address" required rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <input type="text" id="student-grade-linked" placeholder="Grade/Class" required>
+        </div>
+        <div class="form-group">
+          <input type="text" id="student-id-linked" placeholder="Student ID Number" required>
+        </div>
+        <button type="submit" class="submit-btn green-btn">Complete Student Registration</button>
+      </form>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Scripts -->
+<script type="module">
+// -----------------------------
+// Firebase imports (CDN) + init
+// -----------------------------
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
+
+// TODO: Replace the values below with your Firebase project's config values
+const firebaseConfig = {
+  apiKey: "AIzaSyDagvyKR4kw9UEeagK4a0sKHNqwJcfm2Ug",
+  authDomain: "student-management-6f674.firebaseapp.com",
+  projectId: "student-management-6f674",
+  storageBucket: "student-management-6f674.firebasestorage.app",
+  messagingSenderId: "243452338221",
+  appId: "1:243452338221:web:ab5c2f5b2db4f3359558a4",
+  measurementId: "G-C8Y3RXRB84"
+};
+
+// Initialize Firebase (app, auth, firestore, storage)
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+// Local test mode: open the page with ?mock=1 to simulate Firebase responses
+const MOCK_MODE = new URLSearchParams(window.location.search).get('mock') === '1';
+if (MOCK_MODE) console.warn('MOCK_MODE enabled — no network calls will be made.');
+
+// Mock data store (for MOCK_MODE persistence)
+const mockDb = {
+  users: new Map(),
+  files: new Map()
+};
+
+// Mock helpers with persistence
+async function mockCreateUser(email) {
+  await new Promise(r => setTimeout(r, 400));
+  const uid = 'mock-' + Math.floor(Math.random() * 1000000);
+  mockDb.users.set(uid, { email, uid });
+  console.log('Mock: Created user', { email, uid });
+  return { user: { uid } };
+}
+
+async function mockSignIn(email) {
+  await new Promise(r => setTimeout(r, 300));
+  // Find user by email in our mock db
+  for (const [uid, user] of mockDb.users) {
+    if (user.email === email) {
+      console.log('Mock: Signed in user', { email, uid });
+      return { user: { uid } };
+    }
+  }
+  // If not found, create new
+  return mockCreateUser(email);
+}
+
+async function mockUpload(file, path) {
+  await new Promise(r => setTimeout(r, 150));
+  const url = `https://mock.storage/${encodeURIComponent(path)}/${encodeURIComponent(file && file.name ? file.name : 'file')}`;
+  mockDb.files.set(path, { url, name: file?.name });
+  console.log('Mock: Uploaded file', { path, url });
+  return url;
+}
+
+async function mockGetDoc(uid, email) {
+  await new Promise(r => setTimeout(r, 120));
+  // Try to get from mock db first
+  const user = mockDb.users.get(uid);
+  if (user) {
+    console.log('Mock: Retrieved user', user);
+    return { 
+      exists: () => true, 
+      data: () => user
+    };
+  }
+  // Fallback mock data
+  const inferredRole = email && email.includes('parent') ? 'Parent' : (email && email.includes('teacher') ? 'Teacher' : 'Student');
+  return { 
+    exists: () => true, 
+    data: () => ({ firstName: 'Mock', lastName: 'User', role: inferredRole, email }) 
+  };
+}
+
+// Utility functions
+function showLoading() {
+  document.getElementById('loading-indicator').classList.remove('hidden');
+  // Disable submit buttons to prevent duplicate submissions
+  document.querySelectorAll('.submit-btn').forEach(btn => {
+    btn.disabled = true;
+    btn.setAttribute('aria-disabled', 'true');
+  });
+  // Announce busy state for accessibility
+  document.body.setAttribute('aria-busy', 'true');
+}
+
+function hideLoading() {
+  document.getElementById('loading-indicator').classList.add('hidden');
+  // Re-enable submit buttons
+  document.querySelectorAll('.submit-btn').forEach(btn => {
+    btn.disabled = false;
+    btn.removeAttribute('aria-disabled');
+  });
+  document.body.removeAttribute('aria-busy');
+}
+
+function showError(message) {
+  const errorDiv = document.getElementById('form-error');
+  errorDiv.textContent = message;
+  errorDiv.classList.remove('hidden');
+  setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+}
+
+function showSuccess(message) {
+  const successDiv = document.getElementById('success-message');
+  successDiv.textContent = message;
+  successDiv.classList.remove('hidden');
+  setTimeout(() => successDiv.classList.add('hidden'), 5000);
+}
+
+// Navigation helper to centralize redirect logic
+function navigateTo(page, uid) {
+  if (uid) {
+    // ensure uid is encoded
+    const encoded = encodeURIComponent(uid);
+    window.location.href = `${page}?uid=${encoded}`;
+  } else {
+    window.location.href = page;
+  }
+}
+
+// Generate a reasonably unique student ID: STU + last two year digits + 6 random digits
+function generateStudentId() {
+  const now = new Date();
+  const year = now.getFullYear().toString().slice(-2);
+  const rnd = Math.floor(100000 + Math.random() * 900000); // 6 digits
+  return `STU${year}${rnd}`;
+}
+
+// Tab switching
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById(this.dataset.tab + '-tab').classList.add('active');
+  });
+});
+
+// Show student-specific fields when Student role is selected
+document.getElementById('register-role').addEventListener('change', function() {
+  const studentFields = document.getElementById('student-specific-fields');
+  const controls = studentFields.querySelectorAll('input, select, textarea');
+  const isStudent = this.value === 'Student';
+
+  if (isStudent) {
+    studentFields.classList.remove('hidden');
+  // if student self-registration, generate an id and populate readonly field if present
+  const sId = generateStudentId();
+  const sidInput = document.getElementById('student-id');
+  if (sidInput && !sidInput.value) { sidInput.value = sId; sidInput.readOnly = true; sidInput.classList.add('readonly-input'); }
+  } else {
+    studentFields.classList.add('hidden');
+  }
+
+  // Enable/disable and manage required state for contained controls
+  controls.forEach(el => {
+    if (isStudent) {
+      // restore previous required state if stored
+      if (el.dataset.wasRequired === 'true') el.required = true;
+      el.disabled = false;
+    } else {
+      // remember if it was required, then disable and clear required so browser won't validate hidden fields
+      if (el.required) el.dataset.wasRequired = 'true';
+      el.required = false;
+      el.disabled = true;
+    }
+  });
+});
+
+// Initialize student-specific controls on page load according to current selection
+(function initStudentFields() {
+  const roleSelect = document.getElementById('register-role');
+  if (roleSelect) {
+    roleSelect.dispatchEvent(new Event('change'));
+  }
+})();
+
+// File upload helper
+async function uploadFile(file, path) {
+  const storageRef = ref(storage, path);
+  const snapshot = await uploadBytes(storageRef, file);
+  return await getDownloadURL(snapshot.ref);
+}
+
+// Parent registration
+document.getElementById('register-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  showLoading();
+
+  const role = document.getElementById('register-role').value;
+  if (!role) {
+    hideLoading();
+    showError('Please select your role before registering.');
+    return;
+  }
+  const email = document.getElementById('register-email').value;
+  const password = document.getElementById('register-password').value;
+  const firstName = document.getElementById('register-firstname').value;
+  const lastName = document.getElementById('register-lastname').value;
+  const phone = document.getElementById('register-phone').value;
+  const address = document.getElementById('register-address').value;
+  const identity = document.getElementById('register-identity').value;
+
+  try {
+    // Check if we're in MOCK_MODE
+    const MOCK_MODE = new URLSearchParams(window.location.search).get('mock') === '1';
+    console.log('Registration attempt in', MOCK_MODE ? 'MOCK mode' : 'REAL mode');
+
+    // If registering a parent, set skip flag BEFORE creating the auth user
+    if (role === 'Parent') {
+      try { window.__skipAutoRedirect = true; } catch (e) { /* ignore */ }
+      setTimeout(() => { try { window.__skipAutoRedirect = false; } catch (e) {} }, 2 * 60 * 1000);
+    }
+
+    let uid;
+    if (MOCK_MODE) {
+      console.log('Using mock registration...');
+      const mockResult = await mockCreateUser(email);
+      uid = mockResult.user.uid;
+      console.log('Mock user created with ID:', uid);
+    } else {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      uid = userCredential.user.uid;
+    }
+  // Mark the exact UID for which redirects should be suppressed while the parent completes linked student registration
+  try { window.__suppressRedirectForUid = uid; } catch (e) { /* ignore */ }
+  // safety clear after 5 minutes
+  setTimeout(() => { try { if (window.__suppressRedirectForUid === uid) delete window.__suppressRedirectForUid; } catch (e) {} }, 5 * 60 * 1000);
+
+    const userData = {
+      firstName,
+      lastName,
+      fullName: `${firstName} ${lastName}`,
+      email,
+      phone,
+      address,
+      identity,
+      role,
+      createdAt: serverTimestamp(),
+      isActive: true
+    };
+
+    // In MOCK_MODE, skip the actual Firestore write
+    if (!MOCK_MODE) {
+      await setDoc(doc(db, "users", uid), userData);
+    } else {
+      console.log('MOCK_MODE: Simulated user data write:', userData);
+    }
+
+    // UI updates after successful registration
+    if (role === 'Parent') {
+      // populate linked parent id with the parent's UID (so students are linked by uid)
+      document.getElementById('linked-parent-id').value = uid;
+
+      // Prevent the auth-state automatic redirect from taking the user away
+      // immediately after registration so they can complete linked student registration.
+      // This flag is temporary and will be cleared after 2 minutes.
+      try {
+        // ensure the UID-based guard is set (also keep legacy flag for compatibility)
+        window.__skipAutoRedirect = true;
+        window.__suppressRedirectForUid = uid;
+        setTimeout(() => { try { window.__skipAutoRedirect = false; if (window.__suppressRedirectForUid === uid) delete window.__suppressRedirectForUid; } catch (e) {} }, 5 * 60 * 1000);
+      } catch (err) {
+        console.warn('Could not set skip-auto-redirect flag', err);
+      }
+      const linkedSection = document.getElementById('linked-student-registration');
+      linkedSection.classList.remove('hidden');
+
+      // Auto-generate a student id and populate the linked student id field
+      try {
+        const gen = generateStudentId();
+        const linkedIdEl = document.getElementById('student-id-linked');
+        if (linkedIdEl && !linkedIdEl.value) { linkedIdEl.value = gen; linkedIdEl.readOnly = true; linkedIdEl.classList.add('readonly-input'); }
+        const studentIdField = document.getElementById('student-id');
+        if (studentIdField && !studentIdField.value) { studentIdField.value = gen; studentIdField.readOnly = true; studentIdField.classList.add('readonly-input'); }
+      } catch (e) { console.warn('Could not auto-generate student id', e); }
+
+      // small animation highlight
+      setTimeout(() => {
+        linkedSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        linkedSection.style.boxShadow = '0 0 15px rgba(40, 167, 69, 0.15)';
+        linkedSection.style.border = '2px solid #28a745';
+        // focus the first input in the student form for a smoother flow
+        const firstInput = document.getElementById('student-firstname');
+        if (firstInput) firstInput.focus();
+      }, 200);
+
+      hideLoading();
+      showSuccess("Parent registered successfully! Please complete your child's registration below.");
+    } else {
+      hideLoading();
+      showSuccess(`${role} registered successfully! You can now login.`);
+      setTimeout(() => document.querySelector('[data-tab="login"]').click(), 2000);
+    }
+
+  } catch (error) {
+    console.error("Registration error:", error);
+    hideLoading();
+    if (error.code === 'auth/email-already-in-use') {
+      showError("This email is already registered. Please use a different one or login.");
+    } else if (error.code === 'auth/weak-password') {
+      showError("Password is too weak. Please use a stronger one.");
+    } else if (error.code === 'auth/invalid-email') {
+      showError("Please enter a valid email address.");
+    } else {
+      showError("Registration failed: " + error.message);
+    }
+  }
+});
+
+// Student registration (for parents)
+document.getElementById('student-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  showLoading();
+
+  const firstName = document.getElementById('student-firstname').value;
+  const lastName = document.getElementById('student-lastname').value;
+  const email = document.getElementById('student-email').value;
+  const phone = document.getElementById('student-phone').value;
+  const address = document.getElementById('student-address').value;
+  const dob = document.getElementById('student-dob').value;
+  const gender = document.getElementById('student-gender').value;
+  const nationality = document.getElementById('student-nationality').value;
+  const officialIdNumber = document.getElementById('student-id-number').value;
+  const grade = document.getElementById('student-grade-linked').value;
+  const studentId = document.getElementById('student-id-linked').value;
+  const parentID = document.getElementById('linked-parent-id').value;
+  const password = "Student123!"; // Temporary password - student should change
+
+  try {
+  const userCredential = MOCK_MODE ? await mockCreateUser(email) : await createUserWithEmailAndPassword(auth, email, password);
+  const uid = userCredential.user.uid;
+
+    // Upload student documents
+    const idCopy = document.getElementById('student-id-copy').files[0];
+    const birthCert = document.getElementById('student-birth-certificate').files[0];
+    const clinicCard = document.getElementById('student-clinic-card').files[0];
+    const idPhoto = document.getElementById('student-id-photo').files[0];
+    
+    const documents = {};
+    if (idCopy) {
+      documents.idCopy = MOCK_MODE ? await mockUpload(idCopy, `students/${uid}/id_copy`) : await uploadFile(idCopy, `students/${uid}/id_copy`);
+    }
+    if (birthCert) {
+      documents.birthCertificate = MOCK_MODE ? await mockUpload(birthCert, `students/${uid}/birth_certificate`) : await uploadFile(birthCert, `students/${uid}/birth_certificate`);
+    }
+    if (clinicCard) {
+      documents.clinicCard = MOCK_MODE ? await mockUpload(clinicCard, `students/${uid}/clinic_card`) : await uploadFile(clinicCard, `students/${uid}/clinic_card`);
+    }
+    if (idPhoto) {
+      documents.idPhoto = MOCK_MODE ? await mockUpload(idPhoto, `students/${uid}/id_photo`) : await uploadFile(idPhoto, `students/${uid}/id_photo`);
+    }
+
+    // persist student profile to Firestore only when not in MOCK_MODE
+    if (!MOCK_MODE) {
+      await setDoc(doc(db, "users", uid), {
+      firstName,
+      lastName,
+      fullName: `${firstName} ${lastName}`,
+      email,
+      phone,
+      address,
+      dob,
+      gender,
+      nationality,
+      officialIdNumber,
+      grade,
+      studentId,
+      parentID,
+      parentUid: parentID,
+      role: "Student",
+      documents,
+      createdAt: serverTimestamp(),
+      isActive: true
+    });
+    } else {
+      // in MOCK_MODE we simulate persistence by logging the profile (could be extended to localStorage)
+      console.info('MOCK_MODE: created mock student profile for', email, { firstName, lastName, parentUid: parentID });
+    }
+
+    const studentLink = `student-profile.html?uid=${uid}`;
+    document.getElementById('studentAccessLink').href = studentLink;
+    document.getElementById('student-access').classList.remove('hidden');
+    
+    hideLoading();
+    
+    // Create access credentials and dashboard link
+    const studentCredentials = {
+      email: email,
+      temporaryPassword: password,
+      dashboardLink: studentLink,
+      loginInstructions: "Use the email and temporary password to login, then change your password for security."
+    };
+    
+    // Display student access information
+    document.getElementById('student-access').innerHTML = `
+      <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; padding: 15px; margin: 15px 0;">
+        <h4 style="color: #155724; margin-top: 0;">✅ Student Account Created Successfully!</h4>
+        <div style="background: white; padding: 15px; border-radius: 4px; margin: 10px 0;">
+          <p><strong>Student Login Credentials:</strong></p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Temporary Password:</strong> ${password}</p>
+          <p><strong>Dashboard Link:</strong> <a href="${studentLink}" target="_blank" class="student-dashboard-link">Open Student Dashboard</a></p>
+        </div>
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 10px; margin: 10px 0;">
+          <p style="margin: 0; color: #856404;"><strong>Important:</strong> Save these credentials and share them with your child. They should change the password after first login for security.</p>
+        </div>
+        <button onclick="copyCredentials('${email}', '${password}', '${studentLink}')" style="background: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;">📋 Copy Credentials</button>
+      </div>
+    `;
+    
+    showSuccess("Student registered successfully! Login credentials are displayed below - please save them.");
+  // Clear the skip flags once the parent has finished creating the student so auto-redirects can resume
+  try { window.__skipAutoRedirect = false; } catch (e) { /* ignore */ }
+  try { if (window.__suppressRedirectForUid) delete window.__suppressRedirectForUid; } catch (e) { /* ignore */ }
+  } catch (error) {
+    hideLoading();
+    showError("Student registration failed: " + error.message);
+  }
+});
+
+// Enhanced Login with comprehensive role routing
+document.getElementById('login-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  showLoading();
+
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+
+  try {
+    const userCredential = MOCK_MODE ? await mockSignIn(email) : await signInWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+
+    const userDoc = MOCK_MODE ? await mockGetDoc(uid, email) : await getDoc(doc(db, "users", uid));
+
+    if (!userDoc || (typeof userDoc.exists === 'function' && !userDoc.exists())) {
+      throw new Error("User profile not found. Please contact administrator.");
+    }
+
+    const userData = MOCK_MODE ? userDoc.data() : userDoc.data();
+    const role = userData.role;
+
+    // Store user data in localStorage for dashboard access
+    localStorage.setItem('currentUser', JSON.stringify({
+      uid: uid,
+      role: role,
+      name: userData.fullName || `${userData.firstName} ${userData.lastName}`,
+      email: userData.email
+    }));
+
+    hideLoading();
+
+    // Enhanced role-based routing
+    switch (role) {
+  case "Student":
+    showSuccess(`Welcome ${userData.firstName}! Redirecting to your enhanced dashboard...`);
+  setTimeout(() => navigateTo('student-profile.html', uid), 1000);
+    break;
+
+  case "Parent":
+    showSuccess(`Welcome ${userData.firstName}! Redirecting to parent portal...`);
+  setTimeout(() => navigateTo('parent-profile.html'), 1000);
+    break;
+
+  case "Teacher":
+    showSuccess(`Welcome ${userData.firstName}! Redirecting to teacher dashboard...`);
+  setTimeout(() => navigateTo('teacher-profile.html'), 1000);
+    break;
+
+  case "Teacher Assistant":
+    showSuccess(`Welcome ${userData.firstName}! Redirecting to TA dashboard...`);
+  setTimeout(() => navigateTo('teacher-assistant-profile.html'), 1000);
+    break;
+
+  case "Principal":
+    showSuccess(`Welcome ${userData.firstName}! Redirecting to principal dashboard...`);
+  setTimeout(() => navigateTo('principal-profile.html'), 1000);
+    break;
+
+  case "Admin":
+    showSuccess(`Welcome ${userData.firstName}! Redirecting to admin panel...`);
+  setTimeout(() => navigateTo('admin-profile.html'), 1000);
+    break;
+
+  case "SGB":
+    showSuccess(`Welcome ${userData.firstName}! Redirecting to SGB dashboard...`);
+  setTimeout(() => navigateTo('sgb-profile.html'), 1000);
+    break;
+
+  default:
+    showError("Unknown user role. Please contact administrator.");
+}
+
+  } catch (error) {
+    hideLoading();
+    showError("Login failed: " + error.message);
+  }
+});
+
+// Check if user is already logged in
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    try {
+      // If a recent registration just happened for this UID, don't auto-redirect
+      if (window.__skipAutoRedirect) return;
+      if (window.__suppressRedirectForUid && window.__suppressRedirectForUid === user.uid) return;
+
+      // When using emulators, check if they're actually running
+      if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && window.__firebaseEmulatorsOnline === false) {
+        console.warn('Firebase emulators appear to be offline. Start them with: firebase emulators:start --only auth,firestore,storage');
+        showError('Dev environment: Firebase emulators are not running. Using mock data or start emulators.');
+        return;
+      }
+
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const role = userData.role;
+        
+        // Auto-redirect if already logged in
+        const currentPage = window.location.pathname;
+        if (currentPage === '/' || currentPage === '/index.html') {
+          // Only redirect if we're on the login page
+          setTimeout(() => {
+            switch (role) {
+              case "Student":
+                navigateTo('student-profile.html', user.uid);
+                break;
+              case "Parent":
+                navigateTo('parent-profile.html');
+                break;
+              case "Teacher":
+                navigateTo('teacher-profile.html');
+                break;
+              case "Teacher Assistant":
+                navigateTo('teacher-assistant-profile.html');
+                break;
+              case "Principal":
+                navigateTo('principal-profile.html');
+                break;
+              case "Admin":
+                navigateTo('admin-profile.html');
+                break;
+              case "SGB":
+                navigateTo('sgb-profile.html');
+                break;
+            }
+          }, 500);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking auth state:", error);
+      // Handle specific error cases with user-friendly messages
+      if (error.code === 'failed-precondition' || error.message.includes('offline')) {
+        showError('Currently offline. Please check your connection or start Firebase emulators if developing locally.');
+      } else if (error.code === 'permission-denied') {
+        showError('Access denied. Please check your permissions or login again.');
+      } else {
+        showError('Error loading user data. Please refresh or try again later.');
+      }
+    }
+  }
+});
+
+// Copy credentials function
+window.copyCredentials = function(email, password, dashboardLink) {
+  const credentialsText = `Student Login Credentials:\nEmail: ${email}\nTemporary Password: ${password}\nDashboard Link: ${dashboardLink}\n\nImportant: Please change the password after first login for security.`;
+  
+  navigator.clipboard.writeText(credentialsText).then(() => {
+    alert('Credentials copied to clipboard! You can now share them with your child.');
+  }).catch(() => {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = credentialsText;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    alert('Credentials copied to clipboard! You can now share them with your child.');
+  });
+};
+
+console.log("Enhanced Student Management System initialized successfully");
+
+</script>
+</body>
+</html>

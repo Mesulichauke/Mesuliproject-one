@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Parent Profile</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+  <style>
+    /* (kept your styles unchanged except removing duplicates) */
+    body { font-family: 'Roboto', sans-serif; margin:0; padding:0; background:#f4f6f9; }
+    header { background:#007bff; color:white; padding:20px; text-align:center; }
+    header h1 { font-size:2rem; margin:0; }
+    nav h3 { font-size:1.2rem; margin-top:10px; }
+    nav a { color:#ffcc00; text-decoration:none; margin:0 10px; }
+    .logout-btn { position:fixed; top:10px; right:10px; background:#dc3545; color:white; padding:10px 15px; border:none; border-radius:5px; cursor:pointer; z-index:1000; }
+    .logout-btn:hover { background:#c82333; }
+    .profile-section { margin:20px auto; padding:20px; border-radius:8px; background:white; box-shadow:0 4px 8px rgba(0,0,0,0.1); max-width:800px; }
+    .profile-section h2 { font-size:1.8rem; margin-bottom:10px; cursor:pointer; background:#007bff; color:white; padding:15px; border-radius:5px; text-align:center; }
+    .profile-section h2:hover { background:#0056b3; }
+    .dropdown-content { display:none; padding:20px; border-top:1px solid #ddd; max-height:0; overflow:hidden; transition:max-height .35s ease; }
+    .dropdown-content.open { display:block; max-height:1000px; }
+    .scoring-table { width:100%; border-collapse:collapse; margin:20px 0; }
+    .scoring-table th, .scoring-table td { border:1px solid #ddd; padding:12px; text-align:left; }
+    .scoring-table th { background:#007bff; color:white; }
+    .graph-container { margin:20px 0; padding:20px; border-radius:8px; background:#f1f1f1; text-align:center; cursor:pointer; transition:background .3s }
+    .graph-container:hover { background:#e1e1e1 }
+    .dropdown-button { padding:10px 15px; background:#007bff; color:white; border:none; border-radius:5px; cursor:pointer; margin-bottom:10px; width:100%; }
+    .feedback-form { padding:20px; border-radius:8px; background:white; box-shadow:0 4px 8px rgba(0,0,0,0.1); }
+    .feedback-form textarea { width:100%; height:120px; padding:10px; border:1px solid #ccc; border-radius:5px; resize:vertical }
+    .loading { color:#666; font-style:italic }
+    .success-message { background:#d4edda; color:#155724; padding:10px; border-radius:5px; margin-top:10px }
+    .error-message { background:#f8d7da; color:#721c24; padding:10px; border-radius:5px; margin-top:10px }
+    .child-info { background:#e9ecef; padding:15px; border-radius:8px; margin:10px 0 }
+    .performance-metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin:20px 0 }
+    .metric-card { background:#fff; padding:20px; border-radius:8px; text-align:center; border:1px solid #ddd }
+    .metric-card h4 { margin:0 0 10px 0; color:#007bff }
+    .metric-value { font-size:2rem; font-weight:bold; color:#333 }
+    .chart-container { width:100%; height:400px; margin:20px 0 }
+    label { display:block; margin:10px 0 5px 0; font-weight:bold }
+    input, select, textarea { width:100%; padding:10px; border:1px solid #ccc; border-radius:5px; margin-bottom:10px; box-sizing:border-box }
+    .modal { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5) }
+    .modal .modal-content { background:white; margin:5% auto; padding:20px; border-radius:8px; width:90%; max-width:600px; max-height:80vh; overflow-y:auto }
+    .modal .close-btn { background:none; border:none; font-size:20px; cursor:pointer; color:#999 }
+    .child-card { border:1px solid #ddd; border-radius:8px; padding:15px; margin-bottom:15px; background:#f9f9f9; transition:all .3s ease }
+    .child-card:hover { box-shadow:0 2px 8px rgba(0,0,0,0.1); background:white }
+    .child-card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px }
+    .child-card-actions { display:flex; gap:5px }
+    .btn-edit { background:#ffc107; color:#212529; padding:5px 10px; border:none; border-radius:3px; cursor:pointer; font-size:12px }
+    .btn-view { background:#17a2b8; color:white; padding:5px 10px; border:none; border-radius:3px; cursor:pointer; font-size:12px }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px }
+    .form-group-full { grid-column:span 2 }
+  </style>
+</head>
+<body>
+  <button class="logout-btn" onclick="logout()">Logout</button>
+
+  <header>
+    <h1>Parent Profile</h1>
+    <nav>
+      <h3>Welcome, <span id="parent-name" class="loading">Loading...</span>!</h3>
+      <a href="index.html">Home</a>
+    </nav>
+  </header>
+
+  <!-- Personal Information Section -->
+  <div class="profile-section">
+    <h2 onclick="toggleDropdown('personal-info')">Personal Information</h2>
+    <div id="personal-info" class="dropdown-content">
+      <div class="child-info">
+        <h4>Parent Details</h4>
+        <p><strong>Name:</strong> <span id="parent-full-name" class="loading">Loading...</span></p>
+        <p><strong>Email:</strong> <span id="parent-email" class="loading">Loading...</span></p>
+        <p><strong>Phone:</strong> <span id="parent-phone">Not provided</span></p>
+        <p><strong>Address:</strong> <span id="parent-address">Not provided</span></p>
+      </div>
+      <div class="child-info">
+        <h4>Children Management</h4>
+        <div class="management-controls" style="display:flex; gap:10px; margin-bottom:15px;">
+          <button onclick="showAddChildModal()" style="background:#28a745; color:white; padding:8px 12px; border:none; border-radius:4px; cursor:pointer;">➕ Add Child</button>
+          <button onclick="initChildrenListener()" style="background:#007bff; color:white; padding:8px 12px; border:none; border-radius:4px; cursor:pointer;">🔄 Refresh</button>
+        </div>
+        <!-- children-list moved here (single canonical location) -->
+        <div id="children-list" class="children-grid">
+          <!-- children render here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Child's Academic Performance (static demo content kept) -->
+  <div class="profile-section">
+    <h2 onclick="toggleDropdown('academic-performance')">Child's Academic Performance</h2>
+    <div id="academic-performance" class="dropdown-content">
+      <div class="performance-metrics">
+        <div class="metric-card"><h4>Overall Average</h4><div class="metric-value">85%</div></div>
+        <div class="metric-card"><h4>Attendance Rate</h4><div class="metric-value">95%</div></div>
+        <div class="metric-card"><h4>Current Rank</h4><div class="metric-value">12/30</div></div>
+        <div class="metric-card"><h4>Behavior Score</h4><div class="metric-value">A+</div></div>
+      </div>
+
+      <table class="scoring-table">
+        <thead><tr><th>Subject</th><th>Current Grade</th><th>Last Test Score</th><th>Teacher</th></tr></thead>
+        <tbody>
+          <tr><td>Mathematics</td><td>88%</td><td>92%</td><td>Mr. Wilson</td></tr>
+          <tr><td>English</td><td>85%</td><td>80%</td><td>Ms. Davis</td></tr>
+          <tr><td>Science</td><td>90%</td><td>95%</td><td>Dr. Brown</td></tr>
+          <tr><td>History</td><td>78%</td><td>75%</td><td>Mr. Johnson</td></tr>
+        </tbody>
+      </table>
+
+      <div class="chart-container"><canvas id="performanceChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Attendance Tracking (static demo) -->
+  <div class="profile-section">
+    <h2 onclick="toggleDropdown('attendance-tracking')">Attendance Tracking</h2>
+    <div id="attendance-tracking" class="dropdown-content">
+      <h3>Monthly Attendance Overview</h3>
+      <div class="chart-container"><canvas id="attendanceChart"></canvas></div>
+      <table class="scoring-table">
+        <thead><tr><th>Date</th><th>Status</th><th>Subject</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>2025-01-03</td><td>Present</td><td>All Classes</td><td>-</td></tr>
+          <tr><td>2025-01-02</td><td>Late</td><td>Mathematics</td><td>Arrived 10 minutes late</td></tr>
+          <tr><td>2025-01-01</td><td>Absent</td><td>All Classes</td><td>Sick leave</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Communication with Teachers -->
+  <div class="profile-section">
+    <h2 onclick="toggleDropdown('teacher-communication')">Communication with Teachers</h2>
+    <div id="teacher-communication" class="dropdown-content">
+      <div class="feedback-form">
+        <h3>Send Message to Teacher</h3>
+        <form id="teacher-message-form">
+          <label for="teacher-select">Select Teacher:</label>
+          <select id="teacher-select" required>
+            <option value="">Choose a teacher</option>
+            <option value="mr-wilson">Mr. Wilson (Mathematics)</option>
+            <option value="ms-davis">Ms. Davis (English)</option>
+            <option value="dr-brown">Dr. Brown (Science)</option>
+            <option value="mr-johnson">Mr. Johnson (History)</option>
+          </select>
+
+          <label for="message-subject">Subject:</label>
+          <input type="text" id="message-subject" placeholder="Enter message subject" required>
+
+          <label for="message-content">Message:</label>
+          <textarea id="message-content" placeholder="Type your message here..." required></textarea>
+
+          <button type="submit">Send Message</button>
+        </form>
+        <div id="message-status"></div>
+      </div>
+
+      <h3>Recent Messages</h3>
+      <div class="child-info">
+        <p><strong>From:</strong> Ms. Davis (English Teacher)</p>
+        <p><strong>Subject:</strong> Great improvement in writing</p>
+        <p><strong>Message:</strong> Your child has shown excellent progress in essay writing this term. Keep up the good work!</p>
+        <p><strong>Date:</strong> January 2, 2025</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule and Events -->
+  <div class="profile-section">
+    <h2 onclick="toggleDropdown('schedule-events')">Schedule & Events</h2>
+    <div id="schedule-events" class="dropdown-content">
+      <h3>Upcoming Events</h3>
+      <table class="scoring-table">
+        <thead><tr><th>Date</th><th>Event</th><th>Time</th><th>Location</th></tr></thead>
+        <tbody>
+          <tr><td>January 15, 2025</td><td>Parent-Teacher Conference</td><td>2:00 PM</td><td>Classroom 10B</td></tr>
+          <tr><td>January 20, 2025</td><td>Science Fair</td><td>9:00 AM</td><td>School Auditorium</td></tr>
+          <tr><td>February 1, 2025</td><td>Term Exam Start</td><td>8:00 AM</td><td>Exam Halls</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Weekly Schedule</h3>
+      <table class="scoring-table">
+        <thead><tr><th>Time</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th></tr></thead>
+        <tbody>
+          <tr><td>8:00-9:00</td><td>Mathematics</td><td>English</td><td>Science</td><td>History</td><td>Mathematics</td></tr>
+          <tr><td>9:00-10:00</td><td>English</td><td>Science</td><td>Mathematics</td><td>Physical Ed</td><td>English</td></tr>
+          <tr><td>10:00-11:00</td><td>Science</td><td>History</td><td>English</td><td>Mathematics</td><td>Science</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Child Modal (single shared form used for "Add Child" and after registration popup) -->
+  <div id="child-modal" class="modal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="child-modal-title">
+      <div class="modal-header">
+        <h3 id="child-modal-title">Add Child</h3>
+        <button class="close-btn" onclick="hideChildModal()">✕</button>
+      </div>
+      <form id="child-form">
+        <input type="hidden" id="child-uid" />
+        <div class="form-grid">
+          <div>
+            <label for="child-firstname">First Name</label>
+            <input id="child-firstname" type="text" placeholder="First Name" required />
+          </div>
+          <div>
+            <label for="child-lastname">Last Name</label>
+            <input id="child-lastname" type="text" placeholder="Last Name" required />
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <label for="child-email">Email (for login)</label>
+            <input id="child-email" type="email" placeholder="student@example.com" required />
+          </div>
+          <div>
+            <label for="child-grade">Grade / Class</label>
+            <input id="child-grade" type="text" placeholder="Grade 10A" required />
+          </div>
+        </div>
+
+        <div>
+          <label for="child-id-copy">ID Copy</label>
+          <input id="child-id-copy" type="file" accept=".pdf,.jpg,.png" />
+        </div>
+        <div>
+          <label for="child-birth-cert">Birth Certificate</label>
+          <input id="child-birth-cert" type="file" accept=".pdf,.jpg,.png" />
+        </div>
+        <div>
+          <label for="child-clinic-card">Clinic Card (optional)</label>
+          <input id="child-clinic-card" type="file" accept=".pdf,.jpg,.png" />
+        </div>
+
+        <div style="margin-top:15px; display:flex; gap:10px; justify-content:flex-end;">
+          <button type="submit" class="btn-primary" style="background:#007bff;color:white;padding:10px 16px;border:none;border-radius:6px;cursor:pointer;">Save</button>
+          <button type="button" class="btn-secondary" onclick="hideChildModal()" style="background:#6c757d;color:white;padding:10px 16px;border:none;border-radius:6px;cursor:pointer;">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Firebase + App script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+    import {
+      getFirestore, collection, doc, getDoc, setDoc, updateDoc, query, where, getDocs, addDoc, serverTimestamp, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-storage.js";
+
+    // ---------- CONFIG ----------
+    const firebaseConfig = {
+      apiKey: "AIzaSyDagvyKR4kw9UEeagK4a0sKHNqwJcfm2Ug",
+      authDomain: "student-management-6f674.firebaseapp.com",
+      projectId: "student-management-6f674",
+      storageBucket: "student-management-6f674.appspot.com",
+      messagingSenderId: "243452338221",
+      appId: "1:243452338221:web:ab5c2f5b2db4f3359558a4",
+      measurementId: "G-C8Y3RXRB84"
+    };
+
+    // ---------- INIT ----------
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    // ---------- STATE ----------
+    let currentParentData = null; // will be set after auth
+    const childrenListEl = document.getElementById('children-list');
+    const childForm = document.getElementById('child-form');
+
+    // ---------- UTIL: toggle dropdowns ----------
+    window.toggleDropdown = function (id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle('open');
+    };
+
+    // ---------- UTIL: file upload ----------
+    async function uploadFile(file, path) {
+      if (!file) return null;
+      const fileRef = ref(storage, path);
+      await uploadBytes(fileRef, file);
+      return await getDownloadURL(fileRef);
+    }
+
+    // ---------- Children listener (realtime) ----------
+    let unsubscribeChildren = null;
+    function initChildrenListener() {
+      // do not start listener until we have a parent
+      if (!currentParentData || !currentParentData.uid) {
+        console.warn('initChildrenListener: parent not loaded yet.');
+        return;
+      }
+
+      // detach previous listener if any
+      if (typeof unsubscribeChildren === 'function') {
+        unsubscribeChildren();
+        unsubscribeChildren = null;
+      }
+
+      const childrenQuery = query(
+        collection(db, 'users'),
+        where('role', '==', 'Student'),
+        where('parentID', '==', currentParentData.uid)
+      );
+
+      unsubscribeChildren = onSnapshot(childrenQuery, (snapshot) => {
+        const children = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        displayChildren(children);
+      }, (err) => {
+        console.error('Error listening to children:', err);
+      });
+    }
+
+    // ---------- Display children ----------
+    function displayChildren(children) {
+      if (!childrenListEl) return;
+      if (!children || children.length === 0) {
+        childrenListEl.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">No children registered yet. Click "Add Child" to get started.</p>';
+        return;
+      }
+
+      childrenListEl.innerHTML = children.map(child => `
+        <div class="child-card">
+          <div class="child-card-header">
+            <h4>${child.firstName || ''} ${child.lastName || ''}</h4>
+            <div class="child-card-actions">
+              <button onclick="showChildCredentials('${child.id}', '${child.email || ''}')" style="background:#17a2b8; color:white; padding:5px 10px; border:none; border-radius:3px; cursor:pointer; font-size:12px;">🔑 Credentials</button>
+              <button onclick="editStudent('${child.id}')" class="btn-edit">✏️ Edit</button>
+              <button onclick="viewStudentProfile('${child.id}')" class="btn-view">👁️ View Dashboard</button>
+            </div>
+          </div>
+          <div class="child-details">
+            <p><strong>Email:</strong> ${child.email || 'Not specified'}</p>
+            <p><strong>Grade:</strong> ${child.grade || 'Not specified'}</p>
+            <p><strong>Student ID:</strong> ${child.studentId || 'Not specified'}</p>
+            <p><strong>Phone:</strong> ${child.phone || 'Not specified'}</p>
+            <p><strong>Status:</strong> <span style="color:#28a745;">Active</span> | <a href="student-profile.html?uid=${child.id}" target="_blank" style="color:#007bff;">Dashboard Link</a></p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ---------- Modal control (single reusable form) ----------
+    window.showAddChildModal = function () {
+      document.getElementById('child-modal-title').textContent = 'Add Child';
+      document.getElementById('child-uid').value = '';
+      childForm.reset();
+      document.getElementById('child-modal').style.display = 'block';
+      document.getElementById('child-modal').setAttribute('aria-hidden', 'false');
+    };
+
+    window.hideChildModal = function () {
+      document.getElementById('child-modal').style.display = 'none';
+      document.getElementById('child-modal').setAttribute('aria-hidden', 'true');
+    };
+
+    // ---------- Add / Edit child form submit ----------
+    childForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentParentData || !currentParentData.uid) {
+        alert('Parent not loaded. Please sign in again.');
+        return;
+      }
+
+      const uid = document.getElementById('child-uid').value;
+      const firstName = document.getElementById('child-firstname').value.trim();
+      const lastName = document.getElementById('child-lastname').value.trim();
+      const email = document.getElementById('child-email').value.trim();
+      const grade = document.getElementById('child-grade').value.trim();
+
+      const idFile = document.getElementById('child-id-copy').files[0];
+      const birthFile = document.getElementById('child-birth-cert').files[0];
+      const clinicFile = document.getElementById('child-clinic-card').files[0];
+
+      try {
+        if (!uid) {
+          // CREATE: create auth user + firestore profile
+          const tempPassword = 'Student123!'; // Consider generating securely and sending reset link
+          let userCredential;
+          try {
+            userCredential = await createUserWithEmailAndPassword(auth, email, tempPassword);
+          } catch (authErr) {
+            // If email already in use, give friendly message
+            console.error('Auth error creating student user:', authErr);
+            if (authErr.code === 'auth/email-already-in-use') {
+              alert('Email already in use for student. Try a different email or link existing account.');
+              return;
+            } else {
+              throw authErr;
+            }
+          }
+
+          const studentUid = userCredential.user.uid;
+          const studentRef = doc(db, 'users', studentUid);
+          await setDoc(studentRef, {
+            firstName, lastName, email, grade,
+            parentID: currentParentData.uid,
+            role: 'Student',
+            createdAt: serverTimestamp()
+          });
+
+          // optional: upload files and attach URLs
+          const uploads = {};
+          if (idFile) uploads.idCopy = await uploadFile(idFile, `students/${studentUid}/id_copy_${Date.now()}_${idFile.name}`);
+          if (birthFile) uploads.birthCertificate = await uploadFile(birthFile, `students/${studentUid}/birth_certificate_${Date.now()}_${birthFile.name}`);
+          if (clinicFile) uploads.clinicCard = await uploadFile(clinicFile, `students/${studentUid}/clinic_card_${Date.now()}_${clinicFile.name}`);
+
+          if (Object.keys(uploads).length) {
+            await updateDoc(studentRef, uploads);
+          }
+
+          // Optionally send password-reset so student can set their own password immediately:
+          try {
+            await sendPasswordResetEmail(auth, email);
+            // Inform parent / show modal with credentials + reset instructions
+            showChildCredentials(studentUid, email, true);
+          } catch (emailErr) {
+            console.warn('Could not send password reset email:', emailErr);
+            showChildCredentials(studentUid, email, false);
+          }
+        } else {
+          // UPDATE existing student document
+          const studentRef = doc(db, 'users', uid);
+          await updateDoc(studentRef, {
+            firstName, lastName, email, grade, updatedAt: serverTimestamp()
+          });
+
+          // upload files if provided and attach
+          if (idFile) {
+            const url = await uploadFile(idFile, `students/${uid}/id_copy_${Date.now()}_${idFile.name}`);
+            await updateDoc(studentRef, { idCopy: url });
+          }
+          if (birthFile) {
+            const url = await uploadFile(birthFile, `students/${uid}/birth_certificate_${Date.now()}_${birthFile.name}`);
+            await updateDoc(studentRef, { birthCertificate: url });
+          }
+          if (clinicFile) {
+            const url = await uploadFile(clinicFile, `students/${uid}/clinic_card_${Date.now()}_${clinicFile.name}`);
+            await updateDoc(studentRef, { clinicCard: url });
+          }
+        }
+
+        hideChildModal();
+      } catch (err) {
+        console.error('Error saving child:', err);
+        alert('Failed to save child. See console for details.');
+      }
+    });
+
+    // ---------- Edit / View Student ----------
+    window.editStudent = async function (uid) {
+      try {
+        const studentDoc = await getDoc(doc(db, 'users', uid));
+        if (!studentDoc.exists()) {
+          alert('Student not found.');
+          return;
+        }
+        const data = studentDoc.data();
+        document.getElementById('child-uid').value = uid;
+        document.getElementById('child-firstname').value = data.firstName || '';
+        document.getElementById('child-lastname').value = data.lastName || '';
+        document.getElementById('child-email').value = data.email || '';
+        document.getElementById('child-grade').value = data.grade || '';
+        showAddChildModal();
+      } catch (err) {
+        console.error(err);
+        alert('Failed to load student for editing.');
+      }
+    };
+
+    window.viewStudentProfile = function (uid) {
+      window.open(`student-profile.html?uid=${uid}`, '_blank');
+    };
+
+    // ---------- Show credentials modal ----------
+    window.showChildCredentials = function (uid, email, resetSent = false) {
+      const dashboardLink = `student-profile.html?uid=${uid}`;
+      const modal = document.createElement('div');
+      modal.className = 'modal';
+      modal.style.display = 'block';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width:520px;">
+          <div class="modal-header">
+            <h3>🔑 Student Access Information</h3>
+            <button onclick="this.closest('.modal').remove()" class="close-btn">✕</button>
+          </div>
+          <div style="padding:20px; background:#e7f3ff; border-radius:4px; border-left:4px solid #007bff;">
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Dashboard Link:</strong> <a href="${dashboardLink}" target="_blank" style="color:#007bff;">Open Student Dashboard</a></p>
+            ${resetSent ? `<p style="margin-top:10px; color:#155724;">A password reset email was sent to the student so they can set a secure password.</p>` : `<p style="margin-top:10px; color:#856404;">Temporary password is the one you set (or use reset link). Please ask student to change it on first login.</p>`}
+          </div>
+          <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+            <button onclick="copyChildAccess('${email}','${dashboardLink}')" style="background:#007bff;color:white;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;">📋 Copy Access Info</button>
+            <button onclick="this.closest('.modal').remove()" style="background:#6c757d;color:white;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;">Close</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    };
+
+    window.copyChildAccess = function (email, link) {
+      const text = `Email: ${email}\nDashboard: ${link}`;
+      navigator.clipboard.writeText(text).then(() => alert('✅ Access info copied!'));
+    };
+
+    // ---------- Expose small helpers ----------
+    window.showAddStudentForm = window.showAddChildModal;
+    window.refreshChildrenList = function () { initChildrenListener(); };
+    window.initChildrenListener = initChildrenListener;
+
+    // ---------- Logout ----------
+    window.logout = function () {
+      signOut(auth).then(() => {
+        alert('Logged out successfully!');
+        window.location.href = 'index.html';
+      }).catch(err => {
+        console.error('Logout failed:', err);
+        alert('Failed to logout. Check console.');
+      });
+    };
+
+    // ---------- Auth state + initial load ----------
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const parentDocRef = doc(db, 'users', user.uid);
+          const parentSnap = await getDoc(parentDocRef);
+          if (!parentSnap.exists()) {
+            console.error('Parent data not found in Firestore');
+            document.getElementById('parent-name').textContent = 'Unknown Parent';
+            return;
+          }
+          const data = parentSnap.data();
+          currentParentData = { uid: user.uid, ...data };
+
+          // populate UI
+          document.getElementById('parent-name').textContent = `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Parent';
+          document.getElementById('parent-full-name').textContent = `${data.firstName || ''} ${data.lastName || ''}`.trim();
+          document.getElementById('parent-email').textContent = data.email || 'Not provided';
+          document.getElementById('parent-phone').textContent = data.phone || 'Not provided';
+          document.getElementById('parent-address').textContent = data.address || 'Not provided';
+
+          // start children listener now that we have parent uid
+          initChildrenListener();
+        } catch (err) {
+          console.error('Error loading parent data:', err);
+          alert('Error loading parent data. See console.');
+        }
+      } else {
+        // not signed in -> redirect to login
+        window.location.href = 'index.html';
+      }
+    });
+
+    // ---------- Small UX: init DOM events ----------
+    document.addEventListener('DOMContentLoaded', () => {
+      // if you want some sections open by default, toggle them here
+      // e.g. toggleDropdown('personal-info');
+    });
+
+    // Optional: setup teacher message submit (demo)
+    document.getElementById('teacher-message-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const teacher = document.getElementById('teacher-select').value;
+      const subject = document.getElementById('message-subject').value;
+      const message = document.getElementById('message-content').value;
+      document.getElementById('message-status').textContent = 'Message sent (demo).';
+      // In production: save message to Firestore or send email/notification
+    });
+
+  </script>
+</body>
+</html>
